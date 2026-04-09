@@ -1,2 +1,10 @@
+SimpleChatWebSocket/target/
+SimpleChatWebSocket/tomcat-temp/
+
+# Maven/Java build outputs (fallback)
 target/
+*.class
+*.war
+
+# IDE settings
 .vscode/
