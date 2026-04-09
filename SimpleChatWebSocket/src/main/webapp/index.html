@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>💬 Simple Chat - WebSocket</title>
     <style>
+      :root {
+        --accent: #6366f1;
+        --accent-hover: #4f46e5;
+        --accent-soft: rgba(99, 102, 241, 0.16);
+        --accent-soft-strong: rgba(99, 102, 241, 0.28);
+        --accent-soft-mid: rgba(99, 102, 241, 0.24);
+        --accent-soft-faint: rgba(99, 102, 241, 0.1);
+        --accent-soft-light: rgba(99, 102, 241, 0.04);
+        --accent-outline: rgba(99, 102, 241, 0.38);
+        --danger: #ef4444;
+        --danger-hover: #dc2626;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -13,295 +26,839 @@
 
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #f0f4f8;
         min-height: 100vh;
         display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 10px;
       }
 
-      .container {
+      .app-container {
         width: 100%;
-        max-width: 600px;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        height: 100vh;
+        display: none;
         overflow: hidden;
+        z-index: 1;
+      }
+
+      .app-container.active {
+        display: flex;
+      }
+
+      /* SIDEBAR */
+      .sidebar {
+        width: 220px;
+        background: #e2e8f0;
+        color: #0f172a;
         display: flex;
         flex-direction: column;
-        height: 90vh;
-        max-height: 600px;
+        border-right: 1px solid #cbd5e1;
       }
 
-      .header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        text-align: center;
+      .sidebar-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid #cbd5e1;
+        font-weight: bold;
+        font-size: 15px;
       }
 
-      .header h1 {
-        font-size: 24px;
-        margin-bottom: 10px;
+      .sidebar-section {
+        padding: 8px 0;
+        border-bottom: 1px solid #cbd5e1;
       }
 
-      .status {
+      .sidebar-title {
+        padding: 8px 16px;
         font-size: 12px;
+        font-weight: bold;
+        color: #64748b;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .sidebar-title .section-icon {
+        color: var(--accent);
+        font-size: 11px;
+        line-height: 1;
         opacity: 0.9;
       }
 
-      .share-link {
-        margin-top: 10px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.16);
-        backdrop-filter: blur(8px);
-        text-align: left;
+      .room-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #334155;
+      }
+
+      .room-item:hover {
+        background: #dbe4ef;
+      }
+
+      .room-item.active {
+        background: linear-gradient(
+          90deg,
+          var(--accent-soft-strong) 0%,
+          var(--accent-soft-faint) 100%
+        );
+        color: #1e1b4b;
+        border-left: 4px solid var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent-soft-mid);
+        font-weight: 600;
+        padding-left: 12px;
+      }
+
+      .user-item {
+        padding: 6px 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #334155;
+        font-size: 13px;
+      }
+
+      .user-item:hover {
+        background: #dbe4ef;
+        color: #0f172a;
+      }
+
+      .user-item-avatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #6366f1;
+        color: #eef0ff;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .online-indicator {
+        width: 7px;
+        height: 7px;
+        background: var(--accent);
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* MAIN CHAT AREA */
+      .main-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #f0f4f8;
+      }
+
+      .chat-header {
+        padding: 12px 20px;
+        background: #e2e8f0;
+        border-bottom: 1px solid #cbd5e1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #0f172a;
+      }
+
+      .chat-header-title {
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .chat-header-info {
         font-size: 12px;
+        color: #64748b;
+      }
+
+      .chat-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .chat-empty {
+        margin: auto;
+        max-width: 360px;
+        width: 100%;
+        text-align: center;
+        padding: 24px 18px;
+        border-radius: 10px;
+        border: 1px dashed var(--accent-outline);
+        background: linear-gradient(
+          180deg,
+          var(--accent-soft) 0%,
+          var(--accent-soft-light) 100%
+        );
+        color: #aeb2c7;
+      }
+
+      .chat-empty-icon {
+        font-size: 28px;
+        line-height: 1;
+        margin-bottom: 10px;
+      }
+
+      .chat-empty-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: #334155;
+        margin-bottom: 6px;
+      }
+
+      .chat-empty-subtitle {
+        font-size: 13px;
         line-height: 1.45;
       }
 
-      .share-link .label {
-        display: block;
-        font-weight: 700;
+      .message {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        background: var(--accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      .message-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .message-header {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
         margin-bottom: 4px;
       }
 
-      .share-link .url-row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-top: 6px;
-      }
-
-      .share-link code {
-        flex: 1;
-        word-break: break-all;
-        font-size: 11px;
-        padding: 6px 8px;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.18);
-      }
-
-      .share-link button {
-        padding: 7px 10px;
-        border: 0;
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.92);
-        color: #4f46e5;
-        font-weight: 700;
-        cursor: pointer;
-        white-space: nowrap;
-      }
-
-      .share-link button:hover {
-        background: #fff;
-      }
-
-      .login-form {
-        display: none;
-        padding: 20px;
-        background: #f5f5f5;
-        border-bottom: 1px solid #ddd;
-      }
-
-      .login-form.active {
-        display: flex;
-        gap: 10px;
-      }
-
-      .login-form input {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
-      }
-
-      .login-form button {
-        padding: 10px 20px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
+      .message-username {
         font-weight: bold;
-        transition: background 0.3s;
+        color: #1e293b;
       }
 
-      .login-form button:hover {
-        background: #764ba2;
+      .message-time {
+        font-size: 11px;
+        color: #999;
       }
 
-      .chat-box {
-        flex: 1;
-        overflow-y: auto;
-        padding: 15px;
-        background: white;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .message {
-        padding: 10px 15px;
-        border-radius: 10px;
-        max-width: 80%;
+      .message-text {
+        color: #334155;
         word-wrap: break-word;
-        font-size: 14px;
-      }
-
-      .message.user {
-        align-self: flex-end;
-        background: #667eea;
-        color: white;
       }
 
       .message.system {
-        align-self: center;
-        background: #f0f0f0;
-        color: #666;
-        font-size: 12px;
-        font-style: italic;
+        justify-content: center;
+        text-align: center;
       }
 
-      .message.other {
-        align-self: flex-start;
-        background: #e0e0e0;
-        color: #333;
-      }
-
-      .message .username {
-        font-weight: bold;
-        font-size: 12px;
-        margin-bottom: 3px;
-        opacity: 0.8;
-      }
-
-      .message .time {
+      .message.system .message-content {
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
         font-size: 11px;
-        opacity: 0.7;
-        margin-top: 3px;
+        color: #6b7280;
+        font-style: normal;
       }
 
-      .input-area {
+      /* WIDGET */
+      .widget {
+        background: #ffffff;
+        border-left: 3px solid var(--accent);
+        border-radius: 4px;
+        padding: 12px;
+        margin: 8px 0;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+      }
+
+      .widget-title {
+        font-weight: bold;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+
+      .vote-options,
+      .quiz-options {
         display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .vote-btn,
+      .quiz-option {
+        padding: 10px 12px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #334155;
+        font-size: 13px;
+        transition: all 0.2s;
+        text-align: left;
+      }
+
+      .vote-btn:hover,
+      .quiz-option:hover {
+        background: #f8fafc;
+        border-color: var(--accent);
+      }
+
+      .vote-btn.voted,
+      .quiz-option.answered {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+
+      .file-item {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         gap: 10px;
-        padding: 15px;
-        background: #f5f5f5;
-        border-top: 1px solid #ddd;
       }
 
-      .input-area input {
+      .file-info {
         flex: 1;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
 
-      .input-area button {
-        padding: 10px 20px;
-        background: #667eea;
+      .file-icon {
+        font-size: 20px;
+      }
+
+      .file-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .file-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: #1e293b;
+      }
+
+      .file-size {
+        font-size: 12px;
+        color: #999;
+      }
+
+      .file-download-btn {
+        padding: 6px 12px;
+        background: var(--accent);
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        transition: background 0.2s;
+      }
+
+      .file-download-btn:hover {
+        background: var(--accent-hover);
+      }
+
+      /* INPUT AREA */
+      .input-section {
+        padding: 20px;
+        background: #ffffff;
+        border-top: 1px solid #cbd5e1;
+      }
+
+      .command-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #f8fafc;
+        flex-wrap: wrap;
+      }
+
+      .cmd-btn {
+        padding: 7px 10px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        color: #334155;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .cmd-icon {
+        color: var(--accent);
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      .cmd-text {
+        letter-spacing: 0.1px;
+      }
+
+      .cmd-btn:hover {
+        background: #eef2ff;
+        color: #1e293b;
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .btn-logout {
+        background: transparent;
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .btn-logout:hover {
+        background: var(--danger-hover);
+        border-color: var(--danger-hover);
+        color: #fff;
+      }
+
+      .input-wrapper {
+        display: flex;
+        gap: 8px;
+      }
+
+      .input-wrapper input {
+        flex: 1;
+        padding: 10px 12px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        color: #334155;
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+
+      .input-wrapper input::placeholder {
+        color: #94a3b8;
+      }
+
+      .input-wrapper input:focus {
+        outline: none;
+        border-color: rgba(99, 102, 241, 0.85);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.24);
+        background: #ffffff;
+      }
+
+      .input-wrapper button {
+        padding: 10px 16px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 4px;
         cursor: pointer;
         font-weight: bold;
-        transition: background 0.3s;
+        transition: background 0.2s;
       }
 
-      .input-area button:hover {
-        background: #764ba2;
+      .input-wrapper button:hover {
+        background: var(--accent-hover);
       }
 
-      .input-area button:disabled {
-        background: #ccc;
+      .input-wrapper button:disabled {
+        background: #999;
         cursor: not-allowed;
       }
 
-      .user-list {
-        padding: 10px 15px;
-        background: #f9f9f9;
-        border-top: 1px solid #ddd;
+      /* RIGHT PANEL - ONLINE USERS */
+      .right-panel {
+        width: 200px;
+        background: #e2e8f0;
+        border-left: 1px solid #cbd5e1;
+        display: flex;
+        flex-direction: column;
+        color: #334155;
+      }
+
+      .panel-header {
+        padding: 12px 16px;
         font-size: 12px;
-        color: #666;
+        font-weight: bold;
+        color: #64748b;
+        text-transform: uppercase;
+        border-bottom: 1px solid #cbd5e1;
       }
 
-      .user-list strong {
-        color: #667eea;
+      .online-list {
+        overflow-y: auto;
+        flex: 1;
+        padding: 8px 0;
       }
 
-      .disconnect-btn {
-        padding: 5px 10px;
-        background: #ff6b6b;
+      .online-user {
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .online-user:hover {
+        background: #dbe4ef;
+        color: #0f172a;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .online-avatar-wrap {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+
+      .online-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent-soft-strong);
+        color: #eef0ff;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .online-avatar-status {
+        position: absolute;
+        right: -2px;
+        bottom: -1px;
+        width: 9px;
+        height: 9px;
+        background: var(--accent);
+        border: 2px solid #e2e8f0;
+        border-radius: 50%;
+      }
+
+      .online-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* LOGIN OVERLAY */
+      .login-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .login-overlay.hidden {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none;
+      }
+
+      .login-box {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        min-width: 300px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .login-box h2 {
+        color: #0f172a;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .login-box input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        color: #334155;
+        font-size: 14px;
+      }
+
+      .login-box input::placeholder {
+        color: #94a3b8;
+      }
+
+      .login-box button {
+        width: 100%;
+        padding: 12px;
+        background: var(--accent);
         color: white;
         border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+        margin-bottom: 16px;
+      }
+
+      .login-box button:hover {
+        background: var(--accent-hover);
+      }
+
+      .share-link-info {
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #64748b;
+        border-left: 3px solid var(--accent);
+      }
+
+      .share-link-info strong {
+        color: #334155;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .share-link-url {
+        background: #eef2f7;
+        padding: 8px;
         border-radius: 3px;
+        word-break: break-all;
+        margin-top: 6px;
+        user-select: all;
+      }
+
+      .share-link-info button {
+        width: 100%;
+        margin-top: 8px;
+        padding: 8px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 4px;
         cursor: pointer;
         font-size: 12px;
-        margin-left: 10px;
+        font-weight: bold;
+        transition: background 0.2s;
       }
 
-      .disconnect-btn:hover {
-        background: #ff5252;
+      .share-link-info button:hover {
+        background: var(--accent-hover);
       }
 
-      @media (max-width: 600px) {
-        .container {
-          max-height: none;
-          height: calc(100vh - 20px);
+      @media (max-width: 1200px) {
+        .right-panel {
+          width: 150px;
         }
+      }
 
-        .message {
-          max-width: 95%;
+      @media (max-width: 900px) {
+        .sidebar {
+          width: 160px;
         }
+        .right-panel {
+          display: none;
+        }
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #e2e8f0;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h1>💬 Simple Chat WebSocket</h1>
-        <div class="status" id="status">Đang kết nối...</div>
-        <div class="share-link">
-          <span class="label">Link dùng chung Wi-Fi</span>
-          <div>
-            Chỉ cần 1 máy chạy server, các máy khác mở link này để vào chat.
-          </div>
-          <div class="url-row">
-            <code id="shareUrl">Đang tạo link...</code>
-            <button type="button" id="copyShareUrlBtn">Copy</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="login-form active" id="loginForm">
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+      <div class="login-box">
+        <h2>💬 Simple Chat</h2>
         <input
           type="text"
           id="usernameInput"
           placeholder="Nhập tên của bạn..."
           maxlength="20"
         />
-        <button onclick="login()">Tham gia</button>
+        <button onclick="handleLogin()">Tham gia</button>
+        <div class="share-link-info">
+          <strong>🔗 Link dùng chung Wi-Fi:</strong>
+          <div class="share-link-url" id="shareUrlDisplay">Đang tạo...</div>
+          <button onclick="copyShareLink()">📋 Copy Link</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="sidebar-header">💬 PHÒNG CHAT</div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">
+            <span class="section-icon">#</span>
+            <span>Channels</span>
+          </div>
+          <div
+            class="room-item active"
+            data-room="chung"
+            onclick="switchRoom('chung')"
+          >
+            # Chung
+          </div>
+          <div
+            class="room-item"
+            data-room="nhom-a"
+            onclick="switchRoom('nhom-a')"
+          >
+            # Nhóm A
+          </div>
+          <div
+            class="room-item"
+            data-room="nhom-b"
+            onclick="switchRoom('nhom-b')"
+          >
+            # Nhóm B
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">
+            <span class="section-icon">●</span>
+            <span>Trực tuyến</span>
+          </div>
+          <div id="sidebarOnlineList"></div>
+        </div>
       </div>
 
-      <div class="chat-box" id="chatBox"></div>
+      <!-- MAIN CHAT -->
+      <div class="main-container">
+        <div class="chat-header">
+          <div>
+            <div class="chat-header-title" id="roomTitle"># Chung</div>
+            <div class="chat-header-info" id="roomInfo">0 online</div>
+          </div>
+          <div>
+            <button class="cmd-btn btn-logout" onclick="disconnect()">
+              Thoát
+            </button>
+          </div>
+        </div>
 
-      <div class="user-list" id="userList">
-        👥 Online: <span id="userCount">0</span>
+        <div class="chat-area" id="chatBox">
+          <div class="chat-empty" id="chatEmptyState">
+            <div class="chat-empty-icon">💬</div>
+            <div class="chat-empty-subtitle">
+              Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện! 👋
+            </div>
+          </div>
+        </div>
+
+        <div class="input-section">
+          <div class="command-buttons">
+            <button
+              class="cmd-btn"
+              onclick="insertCommand('/vote Bình chọn từ phù hợp | A | B | C')"
+            >
+              <span class="cmd-icon">🗳</span>
+              <span class="cmd-text">/vote</span>
+            </button>
+            <button
+              class="cmd-btn"
+              onclick="
+                insertCommand('/quiz Câu hỏi | Đáp án A | Đáp án B | Đáp án C')
+              "
+            >
+              <span class="cmd-icon">🧠</span>
+              <span class="cmd-text">/quiz</span>
+            </button>
+            <button
+              class="cmd-btn"
+              onclick="insertCommand('/file Document.pdf 2.5 MB')"
+            >
+              <span class="cmd-icon">📎</span>
+              <span class="cmd-text">/file</span>
+            </button>
+            <button
+              class="cmd-btn"
+              onclick="insertCommand('/board Tiêu đề bảng thông báo')"
+            >
+              <span class="cmd-icon">📋</span>
+              <span class="cmd-text">/board</span>
+            </button>
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Nhập tin nhắn..."
+              maxlength="500"
+              onkeypress="if (event.key === 'Enter') sendMessage();"
+            />
+            <button onclick="sendMessage()">Gửi</button>
+          </div>
+        </div>
       </div>
 
-      <div class="input-area" id="inputArea" style="display: none">
-        <input
-          type="text"
-          id="messageInput"
-          placeholder="Nhập tin nhắn..."
-          maxlength="500"
-        />
-        <button onclick="sendMessage()">Gửi</button>
-        <button class="disconnect-btn" onclick="disconnect()">Thoát</button>
+      <!-- RIGHT PANEL -->
+      <div class="right-panel">
+        <div class="panel-header">👥 Online</div>
+        <div class="online-list" id="onlineUserList"></div>
       </div>
     </div>
 
@@ -313,72 +870,17 @@
       let reconnectAttempts = 0;
       const maxReconnectAttempts = 8;
       let manualDisconnect = false;
+      let currentRoom = "chung";
+
+      const rooms = {
+        chung: "# Chung",
+        "nhom-a": "# Nhóm A",
+        "nhom-b": "# Nhóm B",
+      };
 
       function getContextPath() {
         const segments = window.location.pathname.split("/").filter(Boolean);
         return segments.length > 0 ? "/" + segments[0] : "";
-      }
-
-      // Kết nối WebSocket
-      function connectWebSocket() {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          return;
-        }
-
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const host = window.location.host;
-
-        const basePath = getContextPath();
-
-        const wsUrl = protocol + "//" + host + basePath + "/chat";
-        console.log("=== WebSocket Connection Debug ===");
-        console.log("Protocol:", protocol);
-        console.log("Host:", host);
-        console.log("Base Path:", basePath);
-        console.log("Full URL:", wsUrl);
-        console.log("==================================");
-
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = function () {
-          console.log("WebSocket connected");
-          document.getElementById("status").textContent = "✓ Đã kết nối";
-          isConnected = true;
-          reconnectAttempts = 0;
-
-          if (username) {
-            ws.send(
-              JSON.stringify({
-                type: "login",
-                username: username,
-              }),
-            );
-          }
-        };
-
-        ws.onmessage = function (event) {
-          handleMessage(JSON.parse(event.data));
-        };
-
-        ws.onerror = function (error) {
-          console.error("WebSocket error:", error);
-          document.getElementById("status").textContent = "✗ Lỗi kết nối";
-          isConnected = false;
-        };
-
-        ws.onclose = function () {
-          console.log("WebSocket closed");
-          document.getElementById("status").textContent = "✗ Đã ngắt kết nối";
-          isConnected = false;
-
-          if (!manualDisconnect) {
-            scheduleReconnect();
-            return;
-          }
-
-          document.getElementById("loginForm").classList.add("active");
-          document.getElementById("inputArea").style.display = "none";
-        };
       }
 
       function getShareUrl() {
@@ -386,77 +888,266 @@
         return window.location.origin + path + "/";
       }
 
-      function refreshShareLink() {
-        document.getElementById("shareUrl").textContent = getShareUrl();
+      function updateShareLink() {
+        document.getElementById("shareUrlDisplay").textContent = getShareUrl();
       }
 
       async function copyShareLink() {
-        const url = getShareUrl();
-
         try {
-          await navigator.clipboard.writeText(url);
-          document.getElementById("copyShareUrlBtn").textContent = "Đã copy";
-          setTimeout(function () {
-            document.getElementById("copyShareUrlBtn").textContent = "Copy";
-          }, 1500);
-        } catch (error) {
-          console.error("Copy failed:", error);
-          alert("Không copy được, bạn có thể copy thủ công link này: " + url);
+          await navigator.clipboard.writeText(getShareUrl());
+          const btn = event.target;
+          btn.textContent = "✅ Đã copy";
+          setTimeout(() => (btn.textContent = "📋 Copy Link"), 2000);
+        } catch (err) {
+          alert("Không copy được, bạn có thể copy thủ công: " + getShareUrl());
         }
+      }
+
+      function connectWebSocket() {
+        if (ws && ws.readyState === WebSocket.OPEN) return;
+
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const basePath = getContextPath();
+        const wsUrl =
+          protocol + "//" + window.location.host + basePath + "/chat";
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          isConnected = true;
+          reconnectAttempts = 0;
+          if (username) {
+            ws.send(JSON.stringify({ type: "login", username }));
+          }
+        };
+
+        ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+        ws.onerror = () => {
+          isConnected = false;
+        };
+        ws.onclose = () => {
+          isConnected = false;
+          if (!manualDisconnect) scheduleReconnect();
+        };
       }
 
       function scheduleReconnect() {
-        if (reconnectAttempts >= maxReconnectAttempts) {
-          document.getElementById("status").textContent =
-            "✗ Mất kết nối server";
-          return;
-        }
-
-        reconnectAttempts += 1;
+        if (reconnectAttempts >= maxReconnectAttempts) return;
+        reconnectAttempts++;
         const delay = Math.min(1000 * reconnectAttempts, 5000);
-        document.getElementById("status").textContent =
-          "Đang thử kết nối lại... (" +
-          reconnectAttempts +
-          "/" +
-          maxReconnectAttempts +
-          ")";
-
-        clearTimeout(reconnectTimer);
-        reconnectTimer = setTimeout(function () {
-          connectWebSocket();
-        }, delay);
+        reconnectTimer = setTimeout(connectWebSocket, delay);
       }
 
-      // Xử lý tin nhắn từ server
+      function detectCommand(content) {
+        const voteMatch = content.match(/^\/vote\s+([^|]+)(?:\|(.*))?$/);
+        if (voteMatch) {
+          const question = voteMatch[1].trim();
+          const options = voteMatch[2]
+            ? voteMatch[2].split("|").map((o) => o.trim())
+            : ["Đồng ý", "Không đồng ý"];
+          return { type: "vote", question, options };
+        }
+
+        const quizMatch = content.match(/^\/quiz\s+([^|]+)(?:\|(.*))?$/);
+        if (quizMatch) {
+          const question = quizMatch[1].trim();
+          const options = quizMatch[2]
+            ? quizMatch[2].split("|").map((o) => o.trim())
+            : [];
+          return { type: "quiz", question, options };
+        }
+
+        const fileMatch = content.match(
+          /^\/file\s+(.+?)(?:\s+(\d+(?:\.\d+)?\s*[KMG]B|B))?$/,
+        );
+        if (fileMatch) {
+          const fileName = fileMatch[1].trim();
+          const fileSize = fileMatch[2] ? fileMatch[2].trim() : "5.2 MB";
+          return { type: "file", fileName, fileSize };
+        }
+
+        return null;
+      }
+
+      function renderWidget(command) {
+        const widget = document.createElement("div");
+        widget.className = "widget";
+
+        if (command.type === "vote") {
+          widget.innerHTML = `
+            <div class="widget-title">🗳️ Bình chọn: ${escapeHtml(command.question)}</div>
+            <div class="vote-options">
+              ${command.options
+                .map(
+                  (opt) => `
+                <button class="vote-btn" onclick="handleVote(this)">
+                  ${escapeHtml(opt)}
+                </button>
+              `,
+                )
+                .join("")}
+            </div>
+          `;
+        } else if (command.type === "quiz") {
+          widget.innerHTML = `
+            <div class="widget-title">📝 Câu hỏi: ${escapeHtml(command.question)}</div>
+            <div class="quiz-options">
+              ${command.options
+                .map(
+                  (opt, idx) => `
+                <button class="quiz-option" onclick="handleQuizAnswer(this)">
+                  ${String.fromCharCode(65 + idx)}) ${escapeHtml(opt)}
+                </button>
+              `,
+                )
+                .join("")}
+            </div>
+          `;
+        } else if (command.type === "file") {
+          widget.innerHTML = `
+            <div class="widget-title">📁 Chia sẻ file</div>
+            <div class="file-item">
+              <div class="file-info">
+                <span class="file-icon">📄</span>
+                <div class="file-details">
+                  <span class="file-name">${escapeHtml(command.fileName)}</span>
+                  <span class="file-size">${escapeHtml(command.fileSize)}</span>
+                </div>
+              </div>
+              <button class="file-download-btn" onclick="alert('Tải: ${escapeHtml(command.fileName)}')">
+                Tải về
+              </button>
+            </div>
+          `;
+        }
+
+        return widget;
+      }
+
+      function handleVote(btn) {
+        btn.parentElement
+          .querySelectorAll(".vote-btn")
+          .forEach((b) => b.classList.remove("voted"));
+        btn.classList.add("voted");
+      }
+
+      function handleQuizAnswer(btn) {
+        btn.parentElement
+          .querySelectorAll(".quiz-option")
+          .forEach((b) => b.classList.remove("answered"));
+        btn.classList.add("answered");
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
       function handleMessage(data) {
         const chatBox = document.getElementById("chatBox");
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message";
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message";
 
         if (data.type === "message") {
-          messageDiv.classList.add(
-            data.username === username ? "user" : "other",
-          );
-          messageDiv.innerHTML = `
-                    <div class="username">${data.username}</div>
-                    <div>${escapeHtml(data.content)}</div>
-                    <div class="time">${data.time}</div>
-                `;
+          const avatar = data.username.charAt(0).toUpperCase();
+          const command = detectCommand(data.content);
+
+          msgDiv.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-username">${escapeHtml(data.username)}</span>
+                <span class="message-time">${data.time}</span>
+              </div>
+              ${command ? renderWidget(command).outerHTML : `<div class="message-text">${escapeHtml(data.content)}</div>`}
+            </div>
+          `;
         } else if (data.type === "system") {
-          messageDiv.classList.add("system");
-          messageDiv.innerHTML = `>>> ${data.content}`;
+          msgDiv.className = "message system";
+          msgDiv.innerHTML = `<div class="message-content"><div>>>> ${escapeHtml(data.content)}</div></div>`;
         } else if (data.type === "userlist") {
-          document.getElementById("userList").innerHTML =
-            `👥 Online (${data.count}): ${data.users}`;
+          document.getElementById("roomInfo").textContent =
+            `${data.count} online`;
+          updateOnlineList(data.users.split(", "));
           return;
         }
 
-        chatBox.appendChild(messageDiv);
+        chatBox.appendChild(msgDiv);
+        syncChatEmptyState();
         chatBox.scrollTop = chatBox.scrollHeight;
       }
 
-      // Login
-      function login() {
+      function syncChatEmptyState() {
+        const chatBox = document.getElementById("chatBox");
+        const emptyState = document.getElementById("chatEmptyState");
+
+        if (!emptyState) {
+          return;
+        }
+
+        const hasMessages = chatBox.querySelector(".message") !== null;
+        emptyState.style.display = hasMessages ? "none" : "block";
+      }
+
+      function updateOnlineList(users) {
+        const list = document.getElementById("onlineUserList");
+        const sidebarList = document.getElementById("sidebarOnlineList");
+        list.innerHTML = "";
+        sidebarList.innerHTML = "";
+
+        users.forEach((user) => {
+          const initial = (
+            user && user.trim() ? user.trim().charAt(0) : "?"
+          ).toUpperCase();
+
+          const item1 = document.createElement("div");
+          item1.className = "online-user";
+          item1.innerHTML = `
+            <span class="online-avatar-wrap">
+              <span class="online-avatar">${escapeHtml(initial)}</span>
+              <span class="online-avatar-status"></span>
+            </span>
+            <span class="online-name">${escapeHtml(user)}</span>
+          `;
+          list.appendChild(item1);
+
+          const item2 = document.createElement("div");
+          item2.className = "user-item";
+          item2.innerHTML = `
+            <span class="online-indicator"></span>
+            <span class="user-item-avatar">${escapeHtml(initial)}</span>
+            <span class="online-name">${escapeHtml(user)}</span>
+          `;
+          sidebarList.appendChild(item2);
+        });
+      }
+
+      function switchRoom(room) {
+        currentRoom = room;
+        document
+          .querySelectorAll(".room-item")
+          .forEach((r) => r.classList.remove("active"));
+        document.querySelector(`[data-room="${room}"]`).classList.add("active");
+        document.getElementById("roomTitle").textContent = rooms[room];
+        const chatBox = document.getElementById("chatBox");
+        chatBox.innerHTML = `
+          <div class="chat-empty" id="chatEmptyState">
+            <div class="chat-empty-icon">💬</div>
+            <div class="chat-empty-subtitle">
+              Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện! 👋
+            </div>
+          </div>
+        `;
+        syncChatEmptyState();
+      }
+
+      function insertCommand(cmd) {
+        document.getElementById("messageInput").value = cmd;
+        document.getElementById("messageInput").focus();
+      }
+
+      function handleLogin() {
         const input = document.getElementById("usernameInput");
         const name = input.value.trim();
 
@@ -471,86 +1162,45 @@
         }
 
         username = name;
-        manualDisconnect = false;
+        ws.send(JSON.stringify({ type: "login", username: name }));
 
-        ws.send(
-          JSON.stringify({
-            type: "login",
-            username: name,
-          }),
-        );
-
-        document.getElementById("loginForm").classList.remove("active");
-        document.getElementById("inputArea").style.display = "flex";
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("appContainer").classList.add("active");
         document.getElementById("messageInput").focus();
       }
 
-      // Gửi tin nhắn
       function sendMessage() {
         const input = document.getElementById("messageInput");
         const content = input.value.trim();
 
         if (!content) return;
         if (!ws || ws.readyState !== WebSocket.OPEN) {
-          alert("Mất kết nối server, vui lòng chờ reconnect");
+          alert("Mất kết nối server");
           return;
         }
 
-        ws.send(
-          JSON.stringify({
-            type: "message",
-            content: content,
-          }),
-        );
-
+        ws.send(JSON.stringify({ type: "message", content }));
         input.value = "";
-        input.focus();
       }
 
-      // Thoát
       function disconnect() {
         manualDisconnect = true;
         clearTimeout(reconnectTimer);
-
-        if (ws) {
-          ws.close();
-        }
+        if (ws) ws.close();
         username = null;
-        document.getElementById("chatBox").innerHTML = "";
+        location.reload();
       }
 
-      // Escape HTML
-      function escapeHtml(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      // Enter để gửi
-      document.addEventListener("DOMContentLoaded", function () {
-        refreshShareLink();
-
-        document
-          .getElementById("copyShareUrlBtn")
-          .addEventListener("click", copyShareLink);
-
-        document
-          .getElementById("messageInput")
-          .addEventListener("keypress", function (e) {
-            if (e.key === "Enter") {
-              sendMessage();
-            }
-          });
+      document.addEventListener("DOMContentLoaded", () => {
+        updateShareLink();
+        connectWebSocket();
+        syncChatEmptyState();
 
         document
           .getElementById("usernameInput")
-          .addEventListener("keypress", function (e) {
-            if (e.key === "Enter") {
-              login();
-            }
+          .addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleLogin();
           });
-
-        connectWebSocket();
       });
     </script>
   </body>
