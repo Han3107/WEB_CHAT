@@ -1,0 +1,6 @@
+com\simplechat\Server.class
+com\simplechat\WebSocketListener.class
+com\simplechat\ChatEndpoint.class
+com\simplechat\Server$1.class
+com\simplechat\WebSocketInitFilter.class
+com\simplechat\InitServlet.class
