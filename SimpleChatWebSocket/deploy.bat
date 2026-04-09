@@ -40,7 +40,9 @@ echo.
 echo ====================================
 echo DONE! Application deployed.
 echo ====================================
-echo Access at: http://localhost:8080/SimpleChatWebSocket
-echo WebSocket: ws://localhost:8080/SimpleChatWebSocket/chat
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "$ip = Get-NetIPAddress -AddressFamily IPv4 ^| Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.IPAddress -notlike '169.254*' } ^| Select-Object -First 1 -ExpandProperty IPAddress; if (-not $ip) { $ip = '127.0.0.1' }; Write-Output $ip"`) do set "LOCAL_IP=%%I"
+echo Access at: http://%LOCAL_IP%:8080/SimpleChatWebSocket
+echo WebSocket: ws://%LOCAL_IP%:8080/SimpleChatWebSocket/chat
+echo Send this link to other devices on the same Wi-Fi.
 echo.
 pause

@@ -3,9 +3,10 @@ import shutil
 import subprocess
 import time
 import webbrowser
+import socket
 
 TOMCAT_HOME = r"D:\Dowload\TOMCAT\apache-tomcat-10.1.54-windows-x64\apache-tomcat-10.1.54"
-WAR_FILE = r"D:\HK225\PHAT\SimpleChatWebSocket\target\SimpleChatWebSocket.war"
+WAR_FILE = r"D:\HK225\LAP_TRINH_MANG\THUC_HANH\CHAT\SimpleChatWebSocket\target\SimpleChatWebSocket.war"
 WEBAPPS = os.path.join(TOMCAT_HOME, "webapps")
 STARTUP_BAT = os.path.join(TOMCAT_HOME, "bin", "startup.bat")
 SHUTDOWN_BAT = os.path.join(TOMCAT_HOME, "bin", "shutdown.bat")
@@ -14,6 +15,17 @@ print("=" * 50)
 print("SimpleChatWebSocket Auto-Deploy")
 print("=" * 50)
 print()
+
+
+def get_local_ip():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(("8.8.8.8", 80))
+        return sock.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        sock.close()
 
 # 1. Check WAR file
 if not os.path.exists(WAR_FILE):
@@ -67,13 +79,15 @@ print("=" * 50)
 print("✅ SUCCESS! Application is running!")
 print("=" * 50)
 print()
-print("🌐 Web URL: http://localhost:8080/SimpleChatWebSocket")
-print("💬 WebSocket: ws://localhost:8080/SimpleChatWebSocket/chat")
+local_ip = get_local_ip()
+print(f"🌐 Web URL: http://{local_ip}:8080/SimpleChatWebSocket")
+print(f"💬 WebSocket: ws://{local_ip}:8080/SimpleChatWebSocket/chat")
+print("📱 Send this link to other devices on the same Wi-Fi.")
 print()
 
 # Open browser
 try:
-    webbrowser.open("http://localhost:8080/SimpleChatWebSocket")
+    webbrowser.open("http://127.0.0.1:8080/SimpleChatWebSocket")
     print("🔗 Opening browser...")
 except:
     pass

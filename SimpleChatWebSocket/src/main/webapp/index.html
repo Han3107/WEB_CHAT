@@ -51,6 +51,54 @@
         opacity: 0.9;
       }
 
+      .share-link {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(8px);
+        text-align: left;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .share-link .label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .share-link .url-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 6px;
+      }
+
+      .share-link code {
+        flex: 1;
+        word-break: break-all;
+        font-size: 11px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .share-link button {
+        padding: 7px 10px;
+        border: 0;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #4f46e5;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .share-link button:hover {
+        background: #fff;
+      }
+
       .login-form {
         display: none;
         padding: 20px;
@@ -217,6 +265,16 @@
       <div class="header">
         <h1>💬 Simple Chat WebSocket</h1>
         <div class="status" id="status">Đang kết nối...</div>
+        <div class="share-link">
+          <span class="label">Link dùng chung Wi-Fi</span>
+          <div>
+            Chỉ cần 1 máy chạy server, các máy khác mở link này để vào chat.
+          </div>
+          <div class="url-row">
+            <code id="shareUrl">Đang tạo link...</code>
+            <button type="button" id="copyShareUrlBtn">Copy</button>
+          </div>
+        </div>
       </div>
 
       <div class="login-form active" id="loginForm">
@@ -256,6 +314,11 @@
       const maxReconnectAttempts = 8;
       let manualDisconnect = false;
 
+      function getContextPath() {
+        const segments = window.location.pathname.split("/").filter(Boolean);
+        return segments.length > 0 ? "/" + segments[0] : "";
+      }
+
       // Kết nối WebSocket
       function connectWebSocket() {
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -265,15 +328,7 @@
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const host = window.location.host;
 
-        // Tìm base path từ URL hiện tại
-        // Nếu chạy ở http://localhost:8080/ => /chat
-        // Nếu chạy ở http://localhost:8080/SimpleChatWebSocket => /SimpleChatWebSocket/chat
-        let basePath = window.location.pathname;
-        if (basePath === "/" || basePath === "") {
-          basePath = "";
-        } else {
-          basePath = basePath.replace(/\/$/, ""); // Remove trailing slash
-        }
+        const basePath = getContextPath();
 
         const wsUrl = protocol + "//" + host + basePath + "/chat";
         console.log("=== WebSocket Connection Debug ===");
@@ -324,6 +379,30 @@
           document.getElementById("loginForm").classList.add("active");
           document.getElementById("inputArea").style.display = "none";
         };
+      }
+
+      function getShareUrl() {
+        const path = getContextPath();
+        return window.location.origin + path + "/";
+      }
+
+      function refreshShareLink() {
+        document.getElementById("shareUrl").textContent = getShareUrl();
+      }
+
+      async function copyShareLink() {
+        const url = getShareUrl();
+
+        try {
+          await navigator.clipboard.writeText(url);
+          document.getElementById("copyShareUrlBtn").textContent = "Đã copy";
+          setTimeout(function () {
+            document.getElementById("copyShareUrlBtn").textContent = "Copy";
+          }, 1500);
+        } catch (error) {
+          console.error("Copy failed:", error);
+          alert("Không copy được, bạn có thể copy thủ công link này: " + url);
+        }
       }
 
       function scheduleReconnect() {
@@ -449,6 +528,12 @@
 
       // Enter để gửi
       document.addEventListener("DOMContentLoaded", function () {
+        refreshShareLink();
+
+        document
+          .getElementById("copyShareUrlBtn")
+          .addEventListener("click", copyShareLink);
+
         document
           .getElementById("messageInput")
           .addEventListener("keypress", function (e) {
