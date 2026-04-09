@@ -21,7 +21,7 @@ public class WebSocketListener implements ServletContextListener {
         LOGGER.info("========================================");
         LOGGER.info("[App] SimpleChatWebSocket initialized");
         LOGGER.info("[App] Context Path: " + contextPath);
-        LOGGER.info("[App] WebSocket URL: ws://localhost:8081" + contextPath + "/chat");
+        LOGGER.info("[App] WebSocket endpoint path: " + contextPath + "/chat");
         LOGGER.info("========================================");
     }
     

@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -29,8 +27,8 @@ import jakarta.websocket.server.ServerEndpoint;
 public class ChatEndpoint {
     
     // Lưu trữ tất cả client kết nối
-    private static Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
-    private static Map<Session, String> userNames = Collections.synchronizedMap(new HashMap<>());
+    private static final Set<Session> sessions = ConcurrentHashMap.newKeySet();
+    private static final Map<Session, String> userNames = new ConcurrentHashMap<>();
     
     private static final Gson gson = new Gson();
     private static final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -38,8 +36,8 @@ public class ChatEndpoint {
     @OnOpen
     public void onOpen(Session session) {
         System.out.println("\n" + getTime() + " [ChatEndpoint.onOpen] ✓ New connection from: " + session.getId());
-        System.out.println("Total clients connected: " + (sessions.size() + 1));
         sessions.add(session);
+        System.out.println("Total clients connected: " + sessions.size());
         updateUserList();
     }
 
@@ -95,6 +93,9 @@ public class ChatEndpoint {
     public void onError(Session session, Throwable throwable) {
         System.err.println("WebSocket error: " + throwable.getMessage());
         throwable.printStackTrace();
+        if (session != null) {
+            onClose(session);
+        }
     }
 
     // Gửi tin nhắn từ user
@@ -107,14 +108,8 @@ public class ChatEndpoint {
         
         String message = json.toString();
         
-        for (Session session : sessions) {
-            if (session.isOpen()) {
-                try {
-                    session.getBasicRemote().sendText(message);
-                } catch (IOException e) {
-                    System.err.println("Error sending message: " + e.getMessage());
-                }
-            }
+        for (Session session : snapshotSessions()) {
+            sendIfOpen(session, message, "message");
         }
     }
 
@@ -127,14 +122,8 @@ public class ChatEndpoint {
         
         String message = json.toString();
         
-        for (Session session : sessions) {
-            if (session.isOpen()) {
-                try {
-                    session.getBasicRemote().sendText(message);
-                } catch (IOException e) {
-                    System.err.println("Error sending system message: " + e.getMessage());
-                }
-            }
+        for (Session session : snapshotSessions()) {
+            sendIfOpen(session, message, "system message");
         }
     }
 
@@ -149,14 +138,28 @@ public class ChatEndpoint {
         
         String message = json.toString();
         
-        for (Session session : sessions) {
-            if (session.isOpen()) {
-                try {
-                    session.getBasicRemote().sendText(message);
-                } catch (IOException e) {
-                    System.err.println("Error sending user list: " + e.getMessage());
-                }
-            }
+        for (Session session : snapshotSessions()) {
+            sendIfOpen(session, message, "user list");
+        }
+    }
+
+    private static List<Session> snapshotSessions() {
+        return new ArrayList<>(sessions);
+    }
+
+    private void sendIfOpen(Session session, String message, String kind) {
+        if (!session.isOpen()) {
+            sessions.remove(session);
+            userNames.remove(session);
+            return;
+        }
+
+        try {
+            session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            sessions.remove(session);
+            userNames.remove(session);
+            System.err.println("Error sending " + kind + ": " + e.getMessage());
         }
     }
 
