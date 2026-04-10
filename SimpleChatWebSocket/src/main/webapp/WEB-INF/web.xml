@@ -8,4 +8,9 @@
    
     <display-name>SimpleChatWebSocket</display-name>
     
+    <!-- WebSocket configuration -->
+    <listener>
+        <listener-class>org.apache.tomcat.websocket.server.WsContextListener</listener-class>
+    </listener>
+    
 </web-app>

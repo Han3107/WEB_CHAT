@@ -24,13 +24,11 @@ public class Server {
     public static void main(String[] args) throws Exception {
         // Tạo Tomcat instance
         Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8081);  // Use port 8081
+        tomcat.setPort(8080);  // Use port 8080
         
-        // Set base directory to tmp to avoid permission issues
-        File baseDir = new File("./tomcat-temp");
-        if (!baseDir.exists()) {
-            baseDir.mkdirs();
-        }
+        // Set base directory to system temp to avoid permission issues
+        File baseDir = new File(System.getProperty("java.io.tmpdir"), "tomcat-simple-chat-" + System.currentTimeMillis());
+        baseDir.mkdirs();
         tomcat.setBaseDir(baseDir.getAbsolutePath());
         
         // Add web application
@@ -42,7 +40,7 @@ public class Server {
         }
         
         Context context = tomcat.addWebapp(
-            "", 
+            "/SimpleChatWebSocket", 
             warFile.getAbsolutePath()
         );
         context.setReloadable(true);
@@ -79,14 +77,14 @@ public class Server {
             }
         }).start();
         System.out.println();
-        System.out.println("🌐 Web URL:  http://localhost:8081");
-        System.out.println("💬 WebSocket: ws://localhost:8081/chat");
+        System.out.println("🌐 Web URL:  http://localhost:8080/SimpleChatWebSocket/");
+        System.out.println("💬 WebSocket: ws://localhost:8080/SimpleChatWebSocket/chat");
         System.out.println();
         System.out.println("Opening browser...");
         System.out.println();
         
         // Mở browser tự động
-        openBrowser("http://localhost:8081");
+        openBrowser("http://localhost:8080/SimpleChatWebSocket/");
         
         System.out.println("Press CTRL+C to stop...");
         System.out.println();
