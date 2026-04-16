@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin API Test</title>
+  <style>
+    body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
+    .section h2 { margin-top: 0; color: #333; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 4px; font-weight: bold; }
+    .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .status.loading { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    table th { background: #f1f1f1; padding: 10px; text-align: left; border: 1px solid #ddd; }
+    table td { padding: 8px; border: 1px solid #ddd; }
+    table tr:nth-child(even) { background: #f9f9f9; }
+    button { padding: 8px 16px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .data-display { background: #f9f9f9; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 12px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✅ Admin Dashboard API Test Panel</h1>
+    
+    <div class="section">
+      <h2>Server Connection</h2>
+      <button onclick="testServer()">Test Server Connectivity</button>
+      <div id="serverStatus"></div>
+    </div>
+
+    <div class="section">
+      <h2>Admin Authentication</h2>
+      <button onclick="testAdminLogin()">Test Admin Login</button>
+      <div id="loginStatus"></div>
+      <input type="password" id="tokenInput" placeholder="Paste token here..." style="width: 100%; padding: 8px; margin-top: 10px;">
+      <button onclick="saveToken()" style="width: 100%; margin-top: 5px;">Use This Token</button>
+    </div>
+
+    <div class="section">
+      <h2>Admin APIs - Test Each Endpoint</h2>
+      <button onclick="testAdminUsers()">📊 GET /api/admin/users</button>
+      <button onclick="testAdminAnalytics()">📈 GET /api/admin/analytics</button>
+      <button onclick="testUserChannels()">💬 GET /api/users/channels</button>
+      <button onclick="testAdminLogs()">📋 GET /api/admin/logs</button>
+      <div id="apiStatus"></div>
+    </div>
+
+    <div class="section">
+      <h2>API Response Data</h2>
+      <div id="responseData" class="data-display">Load data using buttons above...</div>
+    </div>
+
+    <div class="section">
+      <h2>Users Table (Should Load From API)</h2>
+      <table id="usersTable">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr><td colspan="5" style="text-align:center">Click "📊 GET /api/admin/users" to load data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Channels Table (Should Load From API)</h2>
+      <table id="channelsTable">
+        <thead>
+          <tr>
+            <th>Channel Name</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Members</th>
+            <th>Messages</th>
+          </tr>
+        </thead>
+        <tbody id="channelsTableBody">
+          <tr><td colspan="5" style="text-align:center">Click "💬 GET /api/users/channels" to load data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const contextPath = window.location.pathname.split("/").slice(0, -1).join("/");
+    const API_BASE = `${window.location.origin}${contextPath}/api`;
+    let adminToken = localStorage.getItem("adminTestToken") || null;
+
+    function setStatus(elementId, type, message) {
+      const elem = document.getElementById(elementId);
+      elem.className = `status ${type}`;
+      elem.textContent = message;
+    }
+
+    async function testServer() {
+      setStatus("serverStatus", "loading", "⏳ Testing...");
+      try {
+        const response = await fetch(`${API_BASE}/users/channels`, { timeout: 5000 });
+        if (response.ok) {
+          setStatus("serverStatus", "success", "✅ Server is running and responding!");
+        } else {
+          setStatus("serverStatus", "error", `❌ Server responded with status ${response.status}`);
+        }
+      } catch (e) {
+        setStatus("serverStatus", "error", `❌ Server not responding: ${e.message}`);
+      }
+    }
+
+    async function testAdminLogin() {
+      setStatus("loginStatus", "loading", "⏳ Testing admin login...");
+      try {
+        const response = await fetch(`${API_BASE}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "admin", password: "user123" })
+        });
+        const data = await response.json();
+        if (data.token) {
+          adminToken = data.token;
+          localStorage.setItem("adminTestToken", adminToken);
+          document.getElementById("tokenInput").value = adminToken;
+          setStatus("loginStatus", "success", `✅ Admin login successful! Token generated.`);
+        } else {
+          setStatus("loginStatus", "error", `❌ Login failed: ${data.message}`);
+        }
+      } catch (e) {
+        setStatus("loginStatus", "error", `❌ Login error: ${e.message}`);
+      }
+    }
+
+    function saveToken() {
+      adminToken = document.getElementById("tokenInput").value;
+      if (adminToken) {
+        localStorage.setItem("adminTestToken", adminToken);
+        setStatus("loginStatus", "success", "✅ Token saved!");
+      }
+    }
+
+    async function testAdminUsers() {
+      if (!adminToken) {
+        setStatus("apiStatus", "error", "❌ No token! Login first.");
+        return;
+      }
+      setStatus("apiStatus", "loading", "⏳ Fetching /api/admin/users...");
+      try {
+        const response = await fetch(`${API_BASE}/admin/users`, {
+          headers: { Authorization: `Bearer ${adminToken}` }
+        });
+        const data = await response.json();
+        document.getElementById("responseData").textContent = JSON.stringify(data, null, 2);
+        
+        if (data.data && Array.isArray(data.data)) {
+          document.getElementById("usersTableBody").innerHTML = data.data.map(u => `
+            <tr>
+              <td>${u.username}</td>
+              <td>${u.email}</td>
+              <td>${u.role}</td>
+              <td>${u.status}</td>
+              <td>${u.createdAt ? u.createdAt.split("T")[0] : "N/A"}</td>
+            </tr>
+          `).join("");
+          setStatus("apiStatus", "success", `✅ Loaded ${data.data.length} users successfully!`);
+        } else {
+          setStatus("apiStatus", "error", "❌ Unexpected data format");
+        }
+      } catch (e) {
+        setStatus("apiStatus", "error", `❌ Error: ${e.message}`);
+        document.getElementById("responseData").textContent = `Error: ${e.message}`;
+      }
+    }
+
+    async function testAdminAnalytics() {
+      if (!adminToken) {
+        setStatus("apiStatus", "error", "❌ No token! Login first.");
+        return;
+      }
+      setStatus("apiStatus", "loading", "⏳ Fetching /api/admin/analytics...");
+      try {
+        const response = await fetch(`${API_BASE}/admin/analytics`, {
+          headers: { Authorization: `Bearer ${adminToken}` }
+        });
+        const data = await response.json();
+        document.getElementById("responseData").textContent = JSON.stringify(data, null, 2);
+        setStatus("apiStatus", "success", `✅ Analytics loaded!`);
+      } catch (e) {
+        setStatus("apiStatus", "error", `❌ Error: ${e.message}`);
+      }
+    }
+
+    async function testUserChannels() {
+      setStatus("apiStatus", "loading", "⏳ Fetching /api/users/channels...");
+      try {
+        const response = await fetch(`${API_BASE}/users/channels`);
+        const data = await response.json();
+        document.getElementById("responseData").textContent = JSON.stringify(data, null, 2);
+        
+        if (data.channels && Array.isArray(data.channels)) {
+          document.getElementById("channelsTableBody").innerHTML = data.channels.map(c => `
+            <tr>
+              <td>#${c.channelName}</td>
+              <td>${c.description || "-"}</td>
+              <td>${c.channelType}</td>
+              <td>${c.memberCount || 0}</td>
+              <td>${c.messageCount || 0}</td>
+            </tr>
+          `).join("");
+          setStatus("apiStatus", "success", `✅ Loaded ${data.channels.length} channels successfully!`);
+        } else {
+          setStatus("apiStatus", "error", "❌ Unexpected data format");
+        }
+      } catch (e) {
+        setStatus("apiStatus", "error", `❌ Error: ${e.message}`);
+      }
+    }
+
+    async function testAdminLogs() {
+      if (!adminToken) {
+        setStatus("apiStatus", "error", "❌ No token! Login first.");
+        return;
+      }
+      setStatus("apiStatus", "loading", "⏳ Fetching /api/admin/logs...");
+      try {
+        const response = await fetch(`${API_BASE}/admin/logs?page=1&pageSize=10`, {
+          headers: { Authorization: `Bearer ${adminToken}` }
+        });
+        const data = await response.json();
+        document.getElementById("responseData").textContent = JSON.stringify(data, null, 2);
+        setStatus("apiStatus", "success", `✅ Logs loaded!`);
+      } catch (e) {
+        setStatus("apiStatus", "error", `❌ Error: ${e.message}`);
+      }
+    }
+
+    // Auto-test on load
+    window.addEventListener("load", () => {
+      testServer();
+    });
+  </script>
+</body>
+</html>

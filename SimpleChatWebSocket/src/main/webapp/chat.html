@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💬 Chat - Simple Chat</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #ecf0f1;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .chat-container {
+        display: flex;
+        height: 100vh;
+      }
+
+      .sidebar {
+        width: 280px;
+        background: white;
+        border-right: 1px solid #bdc3c7;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .sidebar-header h2 {
+        font-size: 20px;
+        margin-bottom: 5px;
+      }
+
+      .user-info {
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      .user-info .username {
+        font-weight: bold;
+      }
+
+      .user-info .role {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 2px 6px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-top: 5px;
+      }
+
+      .channels-section {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px 10px;
+      }
+
+      .section-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        padding: 10px 10px;
+        margin-top: 10px;
+      }
+
+      .channel-item {
+        padding: 10px 12px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .channel-item:hover {
+        background: #f0f0f0;
+      }
+
+      .channel-item.active {
+        background: rgba(102, 126, 234, 0.1);
+        border-left-color: #667eea;
+        font-weight: 600;
+      }
+
+      .channel-icon {
+        font-size: 16px;
+      }
+
+      .sidebar-footer {
+        padding: 15px;
+        border-top: 1px solid #ecf0f1;
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-small {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #667eea;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #5a67d8;
+      }
+
+      .btn-logout {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .btn-logout:hover {
+        background: #c0392b;
+      }
+
+      .main-chat {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-header {
+        background: white;
+        padding: 20px;
+        border-bottom: 1px solid #bdc3c7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .chat-header h2 {
+        font-size: 20px;
+        color: #2c3e50;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .header-actions button {
+        padding: 8px 12px;
+        border: 1px solid #bdc3c7;
+        background: white;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s ease;
+      }
+
+      .header-actions button:hover {
+        background: #f8f9fa;
+        border-color: #667eea;
+      }
+
+      .messages-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: white;
+      }
+
+      .message-group {
+        margin-bottom: 20px;
+      }
+
+      .message-sender {
+        font-size: 12px;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+      }
+
+      .message {
+        background: #f0f7ff;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        max-width: 70%;
+        word-wrap: break-word;
+      }
+
+      .message.own {
+        background: #667eea;
+        color: white;
+        margin-left: auto;
+        max-width: 70%;
+        text-align: right;
+      }
+
+      .message-time {
+        font-size: 11px;
+        color: #95a5a6;
+        margin-top: 5px;
+      }
+
+      .message-input-area {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #bdc3c7;
+        display: flex;
+        gap: 10px;
+      }
+
+      .input-wrapper {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+      }
+
+      .message-input-area input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #bdc3c7;
+        border-radius: 20px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+
+      .message-input-area input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .send-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .send-btn:hover {
+        background: #5a67d8;
+        transform: scale(1.05);
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #95a5a6;
+      }
+
+      .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 200px;
+        }
+
+        .chat-header h2 {
+          font-size: 16px;
+        }
+
+        .message {
+          max-width: 90%;
+        }
+
+        .message.own {
+          max-width: 90%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .chat-container {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          height: auto;
+          max-height: 120px;
+          flex-direction: row;
+          overflow-x: auto;
+        }
+
+        .channels-section {
+          display: flex;
+          gap: 10px;
+          padding: 10px;
+        }
+
+        .sidebar-footer {
+          position: absolute;
+          bottom: 0;
+          right: 20px;
+          gap: 5px;
+          border: none;
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2>💬 QuầyChat</h2>
+          <div class="user-info">
+            <div class="username" id="sidebarUsername">User</div>
+            <div class="role" id="userRole">user</div>
+          </div>
+        </div>
+
+        <div class="channels-section">
+          <div class="section-title">Channels</div>
+          <div
+            class="channel-item active"
+            onclick="selectChannel('general', this)"
+          >
+            <span class="channel-icon">#</span>
+            <span>general</span>
+          </div>
+          <div class="channel-item" onclick="selectChannel('random', this)">
+            <span class="channel-icon">#</span>
+            <span>random</span>
+          </div>
+          <div class="channel-item" onclick="selectChannel('tech', this)">
+            <span class="channel-icon">#</span>
+            <span>tech</span>
+          </div>
+          <div class="channel-item" onclick="selectChannel('work', this)">
+            <span class="channel-icon">#</span>
+            <span>work</span>
+          </div>
+
+          <div class="section-title">Direct Messages</div>
+          <div class="channel-item" onclick="selectChannel('admin', this)">
+            <span class="channel-icon">👤</span>
+            <span>admin</span>
+          </div>
+          <div class="channel-item" onclick="selectChannel('user2', this)">
+            <span class="channel-icon">👤</span>
+            <span>user2</span>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="btn-small btn-primary" onclick="joinChannel()">
+            ➕ Channel
+          </button>
+          <button class="btn-small btn-logout" onclick="logout()">
+            🚪 Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Chat Area -->
+      <div class="main-chat">
+        <div class="chat-header">
+          <h2 id="currentChannel"># general</h2>
+          <div class="header-actions">
+            <button onclick="showInfo()">ℹ️ Info</button>
+            <button onclick="showMembers()">👥 Members</button>
+          </div>
+        </div>
+
+        <div class="messages-area" id="messagesArea">
+          <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <div>Chọn một channel để bắt đầu chat</div>
+          </div>
+        </div>
+
+        <div class="message-input-area">
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Nhập tin nhắn..."
+              onkeypress="handleKeyPress(event)"
+            />
+            <button class="send-btn" onclick="sendMessage()">📤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentChannel = "general";
+      let currentDMUser = null; // Track current DM conversation
+      let channelMap = {}; // Map of channel name to channel ID
+      let isDirectMessage = false; // Flag to know if current mode is DM
+      const username = localStorage.getItem("username") || "User";
+      const role = localStorage.getItem("role") || "user";
+      const token = localStorage.getItem("token");
+
+      // Load user info and channels
+      window.addEventListener("DOMContentLoaded", () => {
+        if (!token) {
+          window.location.replace("login.html");
+          return;
+        }
+
+        document.getElementById("sidebarUsername").textContent = username;
+        document.getElementById("userRole").textContent = role.toUpperCase();
+
+        // Load channels and users from API
+        loadChannels();
+        loadDMUsers();
+      });
+
+      /**
+       * Load channels from API and build sidebar
+       */
+      function loadChannels() {
+        fetch("/SimpleChatWebSocket/api/users/channels")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.channels) {
+              const channelsContainer =
+                document.querySelector(".channels-section");
+              const existingChannels =
+                channelsContainer.querySelectorAll(".channel-item");
+
+              // Remove existing channel items (keep section title)
+              existingChannels.forEach((item) => item.remove());
+
+              // Build channel map and add to UI
+              let firstChannel = null;
+              data.channels.forEach((channel) => {
+                const chId = channel.channelId || channel.id;
+                const chName = channel.channelName || channel.name;
+                channelMap[chName] = chId;
+                if (!firstChannel) firstChannel = channel;
+
+                const channelEl = document.createElement("div");
+                channelEl.className = "channel-item";
+                channelEl.innerHTML = `
+                  <span class="channel-icon">#</span>
+                  <span>${chName}</span>
+                `;
+                channelEl.onclick = () =>
+                  selectChannel(
+                    chName,
+                    channelEl,
+                    chId,
+                  );
+
+                // Add as first active channel
+                if (
+                  firstChannel &&
+                  chId === (firstChannel.channelId || firstChannel.id)
+                ) {
+                  channelEl.classList.add("active");
+                }
+
+                channelsContainer.insertBefore(
+                  channelEl,
+                  channelsContainer.querySelector(
+                    ".section-title:nth-of-type(2)",
+                  ) || null,
+                );
+              });
+
+              // Load messages for first channel
+              if (firstChannel) {
+                const chName = firstChannel.channelName || firstChannel.name;
+                const chId = firstChannel.channelId || firstChannel.id;
+                selectChannel(
+                  chName,
+                  document.querySelector(".channel-item.active"),
+                  chId,
+                );
+              }
+            }
+          })
+          .catch((error) => console.error("Error loading channels:", error));
+      }
+
+      /**
+       * Load users for DM from API
+       */
+      function loadDMUsers() {
+        fetch("/SimpleChatWebSocket/api/users")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.users) {
+              const dmSection = document.querySelector(".channels-section");
+              const dmTitle = dmSection.querySelector(".section-title:nth-of-type(2)");
+
+              // Remove existing user items (keep DM title)
+              const dmItems = dmSection.querySelectorAll(".channel-item");
+              dmItems.forEach((item) => {
+                const text = item.textContent.trim();
+                if (data.users.some(u => u.username === text)) {
+                  item.remove();
+                }
+              });
+
+              // Add user items for DM
+              data.users.forEach((user) => {
+                const userEl = document.createElement("div");
+                userEl.className = "channel-item";
+                userEl.innerHTML = `
+                  <span class="channel-icon">👤</span>
+                  <span>${user.username}</span>
+                `;
+                userEl.onclick = () => selectDMUser(user.username, userEl);
+
+                dmSection.appendChild(userEl);
+              });
+            }
+          })
+          .catch((error) => console.error("Error loading DM users:", error));
+      }
+
+      /**
+       * Select channel and load messages
+       */
+      function selectChannel(channelName, element, channelId) {
+        currentChannel = channelName;
+        currentDMUser = null;
+        isDirectMessage = false;
+
+        // Update active state
+        document.querySelectorAll(".channel-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+        element.classList.add("active");
+
+        // Update header
+        document.getElementById("currentChannel").textContent =
+          "# " + channelName;
+
+        // Load messages from API
+        loadMessagesFromAPI(channelId);
+      }
+
+      /**
+       * Select user for direct message
+       */
+      function selectDMUser(dmUsername, element) {
+        currentDMUser = dmUsername;
+        currentChannel = null;
+        isDirectMessage = true;
+
+        // Update active state
+        document.querySelectorAll(".channel-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+        element.classList.add("active");
+
+        // Update header
+        document.getElementById("currentChannel").textContent =
+          "👤 " + dmUsername;
+
+        // Load DM messages
+        loadDMMessages(dmUsername);
+      }
+
+      /**
+       * Load direct messages with specific user
+       */
+      function loadDMMessages(dmUsername) {
+        const messagesArea = document.getElementById("messagesArea");
+        messagesArea.innerHTML =
+          '<div style="text-align: center; color: #95a5a6;">Loading...</div>';
+
+        fetch(`/SimpleChatWebSocket/api/users/dm/${dmUsername}?sender=${username}`)
+          .then((response) => response.json())
+          .then((data) => {
+            messagesArea.innerHTML = "";
+
+            if (data.messages && data.messages.length > 0) {
+              data.messages.forEach((msg) => {
+                const messageGroup = document.createElement("div");
+                messageGroup.className = "message-group";
+
+                const isOwnMessage = msg.sender === username;
+                messageGroup.innerHTML = `
+                  <div class="message-sender">${msg.sender}</div>
+                  <div class="message ${isOwnMessage ? "own" : ""}">${msg.content}</div>
+                  <div class="message-time">${new Date(
+                    msg.createdAt,
+                  ).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}</div>
+                `;
+
+                messagesArea.appendChild(messageGroup);
+              });
+
+              // Scroll to bottom
+              messagesArea.scrollTop = messagesArea.scrollHeight;
+            } else {
+              messagesArea.innerHTML = `
+                <div class="empty-state">
+                  <div class="empty-state-icon">💬</div>
+                  <div>Bắt đầu cuộc trò chuyện với ${dmUsername}</div>
+                </div>
+              `;
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading DM messages:", error);
+            messagesArea.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-state-icon">❌</div>
+                <div>Lỗi khi tải tin nhắn</div>
+              </div>
+            `;
+          });
+      }
+
+      /**
+       * Load messages from API for specific channel
+       */
+      function loadMessagesFromAPI(channelId) {
+        const messagesArea = document.getElementById("messagesArea");
+        messagesArea.innerHTML =
+          '<div style="text-align: center; color: #95a5a6;">Loading...</div>';
+
+        fetch(
+          `/SimpleChatWebSocket/api/users/channels/${channelId}/messages?page=0&size=100`,
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            messagesArea.innerHTML = "";
+
+            if (data.messages && data.messages.length > 0) {
+              data.messages.forEach((msg) => {
+                const messageGroup = document.createElement("div");
+                messageGroup.className = "message-group";
+
+                const isOwnMessage = msg.sender === username;
+                messageGroup.innerHTML = `
+                  <div class="message-sender">${msg.sender}</div>
+                  <div class="message ${isOwnMessage ? "own" : ""}">${msg.content}</div>
+                  <div class="message-time">${new Date(
+                    msg.createdAt,
+                  ).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}</div>
+                `;
+
+                messagesArea.appendChild(messageGroup);
+              });
+
+              // Scroll to bottom
+              messagesArea.scrollTop = messagesArea.scrollHeight;
+            } else {
+              messagesArea.innerHTML = `
+                <div class="empty-state">
+                  <div class="empty-state-icon">📭</div>
+                  <div>Chưa có tin nhắn trong ${currentChannel}</div>
+                </div>
+              `;
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading messages:", error);
+            messagesArea.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-state-icon">❌</div>
+                <div>Lỗi khi tải tin nhắn</div>
+              </div>
+            `;
+          });
+      }
+
+      /**
+       * Load demo messages (keep old function for fallback)
+       */
+      function loadMessages() {
+        // This is now handled by loadChannels() and selectChannel()
+      }
+
+      /**
+       * Send message to API (channel or DM)
+       */
+      function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        if (isDirectMessage) {
+          // Send DM
+          sendDMMessage(message, input);
+        } else {
+          // Send channel message
+          sendChannelMessage(message, input);
+        }
+      }
+
+      /**
+       * Send message to channel
+       */
+      function sendChannelMessage(message, input) {
+        const channelId = channelMap[currentChannel];
+        if (!channelId) {
+          alert("Channel not found!");
+          return;
+        }
+
+        fetch("/SimpleChatWebSocket/api/users/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            channelId: channelId,
+            content: message,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.messageId) {
+              // Reload messages to show new message
+              loadMessagesFromAPI(channelId);
+              input.value = "";
+            } else {
+              alert("Error: " + (data.error || "Failed to send message"));
+            }
+          })
+          .catch((error) => {
+            console.error("Error sending message:", error);
+            alert("Error sending message: " + error.message);
+          });
+      }
+
+      /**
+       * Send direct message
+       */
+      function sendDMMessage(message, input) {
+        fetch("/SimpleChatWebSocket/api/users/dm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            senderUsername: username,
+            recipientUsername: currentDMUser,
+            content: message,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.messageId) {
+              // Reload messages to show new message
+              loadDMMessages(currentDMUser);
+              input.value = "";
+            } else {
+              alert("Error: " + (data.error || "Failed to send message"));
+            }
+          })
+          .catch((error) => {
+            console.error("Error sending DM:", error);
+            alert("Error sending message: " + error.message);
+          });
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      function joinChannel() {
+        const newChannel = prompt("Nhập tên channel mới:");
+        if (newChannel && newChannel.trim()) {
+          alert("✅ Bạn đã tham gia channel: #" + newChannel);
+        }
+      }
+
+      function showInfo() {
+        if (isDirectMessage) {
+          alert(
+            `ℹ️ Direct Message: ${currentDMUser}\n\n💬 Cuộc trò chuyện riêng tư với ${currentDMUser}`,
+          );
+        } else {
+          alert(
+            `ℹ️ Channel: ${currentChannel}\n\n📝 Mô tả: Kênh ${currentChannel}\n👥 Thành viên: 15\n📅 Tạo: 2026-04-01`,
+          );
+        }
+      }
+
+      function showMembers() {
+        if (isDirectMessage) {
+          alert(`👤 Participants:\n\n👤 ${username}\n👤 ${currentDMUser}`);
+        } else {
+          alert(
+            `👥 Thành viên của #${currentChannel}:\n\n👤 admin\n👤 ${username}\n👤 user2\n👤 mod1`,
+          );
+        }
+      }
+      }
+
+      function logout() {
+        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+          localStorage.clear();
+          window.location.href = "login.html";
+        }
+      }
+    </script>
+  </body>
+</html>

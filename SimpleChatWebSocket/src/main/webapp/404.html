@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>403 Forbidden - Simple Chat</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .error-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        padding: 60px 40px;
+        text-align: center;
+        max-width: 500px;
+      }
+
+      .error-icon {
+        font-size: 100px;
+        margin-bottom: 20px;
+      }
+
+      .error-code {
+        font-size: 72px;
+        font-weight: bold;
+        color: #e74c3c;
+        margin-bottom: 10px;
+      }
+
+      .error-title {
+        font-size: 28px;
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .error-message {
+        font-size: 16px;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+
+      .back-link {
+        display: inline-block;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-right: 15px;
+      }
+
+      .back-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .logout-link {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #e74c3c;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .logout-link:hover {
+        background: #c0392b;
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="error-container">
+      <div class="error-icon">🚫</div>
+      <div class="error-code">403</div>
+      <div class="error-title">Truy Cập Bị Từ Chối</div>
+      <div class="error-message">
+        Xin lỗi! Bạn không có quyền truy cập trang này.<br />
+        Vui lòng kiểm tra quyền của bạn hoặc liên hệ với quản trị viên.
+      </div>
+      <div>
+        <a href="chat.html" class="back-link">← Quay Lại Chat</a>
+        <a href="javascript:logout()" class="logout-link">🚪 Đăng Xuất</a>
+      </div>
+    </div>
+
+    <script>
+      function logout() {
+        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+          localStorage.clear();
+          window.location.href = "login.html";
+        }
+      }
+    </script>
+  </body>
+</html>
