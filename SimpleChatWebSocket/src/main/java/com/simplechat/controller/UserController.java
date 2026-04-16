@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.simplechat.entity.Channel;
 import com.simplechat.entity.Message;
 import com.simplechat.entity.User;
+import com.simplechat.dto.LoginResponse;
 import com.simplechat.repository.ChannelMemberRepository;
 import com.simplechat.repository.ChannelRepository;
 import com.simplechat.repository.MessageRepository;
@@ -177,6 +178,12 @@ public class UserController extends BaseController {
     @PostMapping("/messages")
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, Object> messageData) {
         try {
+            LoginResponse currentUser = getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", true, "message", "Vui lòng đăng nhập trước"));
+            }
+            
             int channelId = (int) messageData.get("channelId");
             String content = (String) messageData.get("content");
             
@@ -186,8 +193,7 @@ public class UserController extends BaseController {
                     .body(Map.of("error", true, "message", "Không tìm thấy channel"));
             }
             
-            String currentUsername = getCurrentUser().getUsername();
-            User user = userRepository.findByUsername(currentUsername).orElse(null);
+            User user = userRepository.findByUsername(currentUser.getUsername()).orElse(null);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", true, "message", "Không tìm thấy user"));

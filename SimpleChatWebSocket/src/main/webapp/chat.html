@@ -341,37 +341,13 @@
           </div>
         </div>
 
-        <div class="channels-section">
+        <div class="channels-section" id="channelsList">
           <div class="section-title">Channels</div>
-          <div
-            class="channel-item active"
-            onclick="selectChannel('general', this)"
-          >
-            <span class="channel-icon">#</span>
-            <span>general</span>
+          <!-- Channels loaded dynamically from API -->
+          <div class="section-title" style="margin-top: 20px">
+            Direct Messages
           </div>
-          <div class="channel-item" onclick="selectChannel('random', this)">
-            <span class="channel-icon">#</span>
-            <span>random</span>
-          </div>
-          <div class="channel-item" onclick="selectChannel('tech', this)">
-            <span class="channel-icon">#</span>
-            <span>tech</span>
-          </div>
-          <div class="channel-item" onclick="selectChannel('work', this)">
-            <span class="channel-icon">#</span>
-            <span>work</span>
-          </div>
-
-          <div class="section-title">Direct Messages</div>
-          <div class="channel-item" onclick="selectChannel('admin', this)">
-            <span class="channel-icon">👤</span>
-            <span>admin</span>
-          </div>
-          <div class="channel-item" onclick="selectChannel('user2', this)">
-            <span class="channel-icon">👤</span>
-            <span>user2</span>
-          </div>
+          <!-- DM users loaded dynamically from API -->
         </div>
 
         <div class="sidebar-footer">
@@ -443,17 +419,29 @@
        * Load channels from API and build sidebar
        */
       function loadChannels() {
+        console.log("[DEBUG] Loading channels...");
         fetch("/SimpleChatWebSocket/api/users/channels")
-          .then((response) => response.json())
+          .then((response) => {
+            console.log("[DEBUG] Channels response:", response.status);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
           .then((data) => {
+            console.log("[DEBUG] Channels data:", data);
             if (data.channels) {
-              const channelsContainer =
-                document.querySelector(".channels-section");
-              const existingChannels =
-                channelsContainer.querySelectorAll(".channel-item");
+              const container = document.querySelector(".channels-section");
+              const dmTitle = Array.from(
+                container.querySelectorAll(".section-title"),
+              ).find((el) => el.textContent.includes("Direct"));
 
-              // Remove existing channel items (keep section title)
-              existingChannels.forEach((item) => item.remove());
+              // Remove only channel items (those with # icon)
+              const channelItems = Array.from(
+                container.querySelectorAll(".channel-item"),
+              ).filter(
+                (item) =>
+                  item.querySelector(".channel-icon").textContent === "#",
+              );
+              channelItems.forEach((item) => item.remove());
 
               // Build channel map and add to UI
               let firstChannel = null;
@@ -465,69 +453,71 @@
 
                 const channelEl = document.createElement("div");
                 channelEl.className = "channel-item";
+                if (
+                  !firstChannel ||
+                  chId === (firstChannel.channelId || firstChannel.id)
+                ) {
+                  channelEl.classList.add("active");
+                }
                 channelEl.innerHTML = `
                   <span class="channel-icon">#</span>
                   <span>${chName}</span>
                 `;
                 channelEl.onclick = () =>
-                  selectChannel(
-                    chName,
-                    channelEl,
-                    chId,
-                  );
+                  selectChannel(chName, channelEl, chId);
 
-                // Add as first active channel
-                if (
-                  firstChannel &&
-                  chId === (firstChannel.channelId || firstChannel.id)
-                ) {
-                  channelEl.classList.add("active");
-                }
-
-                channelsContainer.insertBefore(
-                  channelEl,
-                  channelsContainer.querySelector(
-                    ".section-title:nth-of-type(2)",
-                  ) || null,
-                );
+                // Insert before DM title
+                container.insertBefore(channelEl, dmTitle);
               });
 
               // Load messages for first channel
               if (firstChannel) {
                 const chName = firstChannel.channelName || firstChannel.name;
                 const chId = firstChannel.channelId || firstChannel.id;
-                selectChannel(
-                  chName,
-                  document.querySelector(".channel-item.active"),
-                  chId,
-                );
+                setTimeout(() => {
+                  selectChannel(
+                    chName,
+                    document.querySelector(".channel-item.active"),
+                    chId,
+                  );
+                }, 100);
               }
+            } else {
+              console.error("[ERROR] No channels in response:", data);
             }
           })
-          .catch((error) => console.error("Error loading channels:", error));
+          .catch((error) => {
+            console.error("[ERROR] Failed to load channels:", error);
+            alert("Lỗi tải channels: " + error.message);
+          });
       }
 
       /**
        * Load users for DM from API
        */
       function loadDMUsers() {
+        console.log("[DEBUG] Loading DM users...");
         fetch("/SimpleChatWebSocket/api/users")
-          .then((response) => response.json())
+          .then((response) => {
+            console.log("[DEBUG] Users response:", response.status);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
           .then((data) => {
+            console.log("[DEBUG] Users data:", data);
             if (data.users) {
-              const dmSection = document.querySelector(".channels-section");
-              const dmTitle = dmSection.querySelector(".section-title:nth-of-type(2)");
+              const container = document.querySelector(".channels-section");
 
-              // Remove existing user items (keep DM title)
-              const dmItems = dmSection.querySelectorAll(".channel-item");
-              dmItems.forEach((item) => {
-                const text = item.textContent.trim();
-                if (data.users.some(u => u.username === text)) {
-                  item.remove();
-                }
-              });
+              // Remove only DM user items (those with 👤 icon)
+              const userItems = Array.from(
+                container.querySelectorAll(".channel-item"),
+              ).filter(
+                (item) =>
+                  item.querySelector(".channel-icon").textContent === "👤",
+              );
+              userItems.forEach((item) => item.remove());
 
-              // Add user items for DM
+              // Add user items for DM - append at end
               data.users.forEach((user) => {
                 const userEl = document.createElement("div");
                 userEl.className = "channel-item";
@@ -536,12 +526,16 @@
                   <span>${user.username}</span>
                 `;
                 userEl.onclick = () => selectDMUser(user.username, userEl);
-
-                dmSection.appendChild(userEl);
+                container.appendChild(userEl);
               });
+            } else {
+              console.error("[ERROR] No users in response:", data);
             }
           })
-          .catch((error) => console.error("Error loading DM users:", error));
+          .catch((error) => {
+            console.error("[ERROR] Failed to load DM users:", error);
+            alert("Lỗi tải users: " + error.message);
+          });
       }
 
       /**
@@ -596,7 +590,9 @@
         messagesArea.innerHTML =
           '<div style="text-align: center; color: #95a5a6;">Loading...</div>';
 
-        fetch(`/SimpleChatWebSocket/api/users/dm/${dmUsername}?sender=${username}`)
+        fetch(
+          `/SimpleChatWebSocket/api/users/dm/${dmUsername}?sender=${username}`,
+        )
           .then((response) => response.json())
           .then((data) => {
             messagesArea.innerHTML = "";
@@ -739,14 +735,20 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
           },
           body: JSON.stringify({
             channelId: channelId,
             content: message,
           }),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            console.log("[DEBUG] Send message response:", response.status);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
           .then((data) => {
+            console.log("[DEBUG] Message sent:", data);
             if (data.messageId) {
               // Reload messages to show new message
               loadMessagesFromAPI(channelId);
@@ -769,6 +771,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
           },
           body: JSON.stringify({
             senderUsername: username,
@@ -776,8 +779,13 @@
             content: message,
           }),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            console.log("[DEBUG] Send DM response:", response.status);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
           .then((data) => {
+            console.log("[DEBUG] DM sent:", data);
             if (data.messageId) {
               // Reload messages to show new message
               loadDMMessages(currentDMUser);
@@ -787,8 +795,8 @@
             }
           })
           .catch((error) => {
-            console.error("Error sending DM:", error);
-            alert("Error sending message: " + error.message);
+            console.error("[ERROR] Error sending DM:", error);
+            alert("Lỗi gửi tin nhắn: " + error.message);
           });
       }
 
@@ -825,7 +833,6 @@
             `👥 Thành viên của #${currentChannel}:\n\n👤 admin\n👤 ${username}\n👤 user2\n👤 mod1`,
           );
         }
-      }
       }
 
       function logout() {
