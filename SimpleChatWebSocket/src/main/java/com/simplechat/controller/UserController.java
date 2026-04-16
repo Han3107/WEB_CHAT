@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.simplechat.dto.LoginResponse;
 import com.simplechat.entity.Channel;
 import com.simplechat.entity.Message;
 import com.simplechat.entity.User;
-import com.simplechat.dto.LoginResponse;
 import com.simplechat.repository.ChannelMemberRepository;
 import com.simplechat.repository.ChannelRepository;
 import com.simplechat.repository.MessageRepository;
@@ -58,15 +58,22 @@ public class UserController extends BaseController {
         // TODO: Thêm auth check khi auth hoàn tất
         // ResponseEntity<?> authCheck = requireAuth();
         // if (authCheck != null) return authCheck;
-        
+
+        String username = getCurrentUser().getUsername();
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", true, "message", "Không tìm thấy user trong hệ thống"));
+        }
+
         Map<String, Object> response = new HashMap<>();
-        response.put("username", getCurrentUser().getUsername());
-        response.put("role", getCurrentUser().getRole());
-        response.put("email", getCurrentUser().getUsername() + "@simplechat.com");
-        response.put("fullName", "User " + getCurrentUser().getUsername());
-        response.put("avatar", "https://api.example.com/avatar/" + getCurrentUser().getUsername());
-        response.put("joinedDate", "2026-04-01");
-        response.put("lastLogin", System.currentTimeMillis());
+        response.put("username", user.getUsername());
+        response.put("role", user.getRole());
+        response.put("email", user.getEmail());
+        response.put("fullName", user.getFullName());
+        response.put("avatar", user.getAvatarUrl());
+        response.put("joinedDate", user.getCreatedAt());
+        response.put("lastLogin", user.getLastLogin());
         return ResponseEntity.ok(response);
     }
     
@@ -429,13 +436,48 @@ public class UserController extends BaseController {
     public ResponseEntity<?> getFriends() {
         ResponseEntity<?> authCheck = requireAuth();
         if (authCheck != null) return authCheck;
-        
+
+        LoginResponse currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", true, "message", "Vui lòng đăng nhập trước"));
+        }
+
+        // Lấy userId hiện tại
+        User user = userRepository.findByUsername(currentUser.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", true, "message", "Không tìm thấy user trong hệ thống"));
+        }
+
+        // Lấy tất cả channel mà user này là thành viên
+        List<com.simplechat.entity.ChannelMember> myMemberships = channelMemberRepository.findByUser_UserId(user.getUserId());
+        // Lấy tất cả userId trong các channel đó (trừ chính mình)
+        java.util.Set<Integer> friendIds = new java.util.HashSet<>();
+        for (com.simplechat.entity.ChannelMember cm : myMemberships) {
+            List<com.simplechat.entity.ChannelMember> members = channelMemberRepository.findByChannel_ChannelId(cm.getChannel().getChannelId());
+            for (com.simplechat.entity.ChannelMember m : members) {
+                if (!m.getUser().getUserId().equals(user.getUserId())) {
+                    friendIds.add(m.getUser().getUserId());
+                }
+            }
+        }
+        // Lấy thông tin user bạn bè
+        List<User> friends = userRepository.findAllById(friendIds);
+        List<Map<String, Object>> friendList = friends.stream().map(u -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("username", u.getUsername());
+            map.put("fullName", u.getFullName());
+            map.put("email", u.getEmail());
+            map.put("role", u.getRole());
+            map.put("avatar", u.getAvatarUrl());
+            map.put("status", u.getStatus());
+            return map;
+        }).toList();
+
         Map<String, Object> response = new HashMap<>();
-        response.put("friends", new Object[]{
-            new Object[]{"username", "user1", "status", "online"},
-            new Object[]{"username", "user2", "status", "offline"},
-            new Object[]{"username", "mod1", "status", "online"}
-        });
+        response.put("friends", friendList);
+        response.put("count", friendList.size());
         return ResponseEntity.ok(response);
     }
     

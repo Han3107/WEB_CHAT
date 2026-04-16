@@ -1,7 +1,7 @@
 # Deploy SimpleChatWebSocket to Tomcat
 
 $TOMCAT_HOME = "D:\Dowload\TOMCAT\apache-tomcat-10.1.54-windows-x64\apache-tomcat-10.1.54"
-$WAR_FILE = "d:\HK225\PHAT\SimpleChatWebSocket\target\SimpleChatWebSocket.war"
+$WAR_FILE = "d:\HK225\LAP_TRINH_MANG\THUC_HANH\CHAT\WEB_CHAT\SimpleChatWebSocket\target\SimpleChatWebSocket.war"
 $WEBAPPS = "$TOMCAT_HOME\webapps"
 
 Write-Host "===================================="
