@@ -11,402 +11,259 @@
     />
     <style>
       :root {
-        --primary: #6c63ff;
-        --secondary: #5a52d5;
-        --bg-light: #f8f9ff;
-        --card-bg: #ffffff;
-        --text-main: #2d3436;
-        --text-dim: #636e72;
-        --shadow-soft: 0 25px 50px -12px rgba(108, 99, 255, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --secondary: #6366f1;
+        --bg-overall: #f0f4f8;
+        --text-main: #1f2937;
+        --text-dim: #6b7280;
+        --white: #ffffff;
       }
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #ffffff;
+        background-color: var(--bg-overall);
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        overflow-y: auto;
-        overflow-x: hidden;
-        position: relative;
-        padding: 40px 20px;
-      }
-
-      .bg-blob {
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        border-radius: 50%;
-        filter: blur(100px);
-        z-index: 0;
-        pointer-events: none;
-        opacity: 0.4;
-      }
-
-      .blob-1 {
-        top: -200px;
-        left: -150px;
-        background: #e0e7ff;
-      }
-
-      .blob-2 {
-        bottom: -200px;
-        right: -150px;
-        background: #f5f3ff;
-      }
-
-      .login-container {
-        width: 100%;
-        max-width: 440px;
         padding: 20px;
+        overflow-x: hidden;
+      }
+
+      /* Main Split Container */
+      .split-container {
+        width: 100%;
+        max-width: 1080px;
+        background: var(--white);
+        border-radius: 24px;
+        display: flex;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        min-height: 600px;
+      }
+
+      /* Left Side: 50% */
+      .side-panel {
+        flex: 1.3;
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .side-panel::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -1px;
+        height: 100%;
+        width: 120px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,0 C60,250 60,750 0,1000 L100,1000 L100,0 Z' fill='white'/%3E%3C/svg%3E");
+        background-size: cover;
+        z-index: 5;
+      }
+
+      .side-content {
         position: relative;
         z-index: 10;
+        max-width: 380px;
       }
 
-      .brand {
-        text-align: center;
+      .side-panel img {
+        width: 200px;
+        height: 200px;
+        object-fit: contain;
         margin-bottom: 24px;
+        filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
       }
 
-      .brand-icon {
-        width: 42px;
-        height: 42px;
-        background: var(--primary);
-        border-radius: 10px;
+      .side-panel h2 { font-size: 34px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+      .side-panel p { font-size: 15px; opacity: 0.85; line-height: 1.6; }
+
+      /* Right Side: 50% */
+      .form-panel {
+        flex: 1;
+        padding: 60px;
         display: flex;
-        align-items: center;
+        flex-direction: column;
         justify-content: center;
-        font-size: 18px;
-        color: white;
-        margin: 0 auto 10px;
-        box-shadow: 0 4px 12px rgba(108, 99, 255, 0.15);
+        background: white;
       }
 
-      .brand h1 {
-        color: var(--text-main);
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        margin-bottom: 2px;
-      }
-
-      .brand-subtitle {
-        color: var(--text-dim);
-        font-size: 11px;
-        font-weight: 500;
-        opacity: 0.7;
-      }
-
-      .glass-card {
-        background: var(--card-bg);
-        border: 1px solid rgba(108, 99, 255, 0.1);
-        border-top: 4px solid var(--primary);
-        border-radius: 20px;
-        padding: 32px 32px 24px;
-        box-shadow: var(--shadow-soft);
-      }
+      .form-header { margin-bottom: 30px; }
+      .form-header h1 { font-size: 28px; font-weight: 800; color: var(--text-main); }
+      .form-header p { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
 
       .tabs {
         display: flex;
         margin-bottom: 24px;
-        background: #f1f3f9;
+        background: #f3f4f6;
         padding: 4px;
-        border-radius: 10px;
+        border-radius: 12px;
+        width: fit-content;
       }
 
       .tab-btn {
-        flex: 1;
-        padding: 10px;
+        padding: 8px 24px;
         border: none;
         background: transparent;
-        color: #8c98a5;
+        color: var(--text-dim);
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
-        border-radius: 8px;
+        border-radius: 9px;
         transition: all 0.3s ease;
       }
 
       .tab-btn.active {
         background: white;
         color: var(--primary);
-        box-shadow: 0 4px 12px rgba(108, 99, 255, 0.15);
-        border: 1px solid rgba(108, 99, 255, 0.1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       }
 
-      .form-group {
-        margin-bottom: 18px;
-      }
-
+      .form-group { margin-bottom: 18px; }
       .form-group label {
         display: block;
-        color: var(--text-dim);
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 8px;
-        margin-left: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 6px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
 
-      .input-wrapper {
-        position: relative;
-      }
-
+      .input-wrapper { position: relative; }
       .input-wrapper i {
         position: absolute;
-        left: 16px;
+        left: 14px;
         top: 50%;
         transform: translateY(-50%);
-        color: #8b85d4;
-        font-size: 16px;
+        color: var(--text-dim);
+        font-size: 14px;
       }
 
       .form-group input {
         width: 100%;
-        padding: 14px 16px 14px 48px;
-        background: #f1f5f9;
-        border: 1px solid #cbd5e1;
-        border-radius: 12px;
-        color: var(--text-main);
-        font-family: inherit;
-        font-size: 15px;
-        transition: all 0.3s ease;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        padding: 12px 14px 12px 42px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.2s;
       }
 
       .form-group input:focus {
         outline: none;
         border-color: var(--primary);
         background: white;
-        box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.1);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
       }
 
-      .btn-submit {
-        width: 100%;
-        padding: 16px;
-        background: linear-gradient(135deg, #7c6ff7 0%, #5a4bcd 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        margin-top: 12px;
-        box-shadow: 0 10px 20px -5px rgba(108, 99, 255, 0.4);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .btn-submit:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 25px -5px rgba(108, 99, 255, 0.5);
-        background: linear-gradient(135deg, #8a7ff9 0%, #6c5ce7 100%);
-      }
-
-      .btn-submit:active {
-        transform: translateY(-1px);
-        box-shadow: 0 5px 15px -5px rgba(108, 99, 255, 0.4);
-      }
-
-      .btn-submit i {
-        transition: transform 0.3s ease;
-      }
-
-      .btn-submit:hover i {
-        transform: translateX(4px);
-      }
-
-      .alert {
-        padding: 12px 16px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        display: none;
-        animation: slideIn 0.3s ease;
-      }
-
-      @keyframes slideIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      /* Professional Polish Extras */
-      .forgot-password {
+      .forgot-link {
         display: block;
         text-align: right;
         font-size: 12px;
         color: var(--primary);
         text-decoration: none;
-        margin-top: -16px;
-        margin-bottom: 24px;
-        font-weight: 500;
-        transition: opacity 0.2s;
+        margin-bottom: 20px;
+        font-weight: 600;
       }
-      .forgot-password:hover { opacity: 0.8; }
+
+      .btn-submit {
+        width: 100%;
+        padding: 14px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+      }
+
+      .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
       .divider {
         display: flex;
         align-items: center;
-        text-align: center;
-        margin: 20px 0;
-        color: var(--text-dim);
-        font-size: 11px;
+        margin: 24px 0;
+        color: #9ca3af;
+        font-size: 10px;
         font-weight: 700;
-        opacity: 0.6;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
-      .divider::before, .divider::after {
-        content: "";
-        flex: 1;
-        border-bottom: 1px solid #e1e5f2;
-      }
-      .divider span { padding: 0 15px; }
+      .divider::before, .divider::after { content: ""; flex: 1; border-bottom: 1px solid #f3f4f6; }
+      .divider span { padding: 0 12px; }
 
-      .social-login {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-      }
+      .social-login { display: flex; justify-content: center; gap: 15px; }
       .social-btn {
-        flex: 1;
-        padding: 12px;
-        border: 1px solid #e1e5f2;
+        width: 42px;
+        height: 42px;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
         background: white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-main);
-        transition: all 0.3s ease;
+        font-size: 18px;
+        transition: all 0.2s;
       }
-      .social-btn:hover {
-        background: #f8f9ff;
-        border-color: var(--primary);
-        transform: translateY(-2px);
-      }
-      .social-btn i { font-size: 18px; }
-      .fa-google { color: #ea4335; }
-      .fa-facebook { color: #1877f2; }
+      .social-btn:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 
-      .login-footer {
-        text-align: center;
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid #f1f3f9;
-        color: var(--text-dim);
-        font-size: 10px;
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-      }
-      .login-footer a { color: var(--text-dim); text-decoration: none; transition: 0.2s; }
-      .login-footer a:hover { color: var(--primary); }
+      .alert { padding: 12px 14px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; display: none; }
+      .alert i { margin-right: 8px; }
+      .alert-error { background: #fee2e2; color: #b91c1c; }
+      .alert-success { background: #dcfce7; color: #15803d; }
+      .alert-info { background: #e0e7ff; color: #4338ca; }
 
-      /* Demo Access Toggle */
-      .demo-toggle {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 100;
+      @media (max-width: 900px) {
+        .split-container { flex-direction: column; max-width: 450px; min-height: auto; }
+        .side-panel::after { display: none; }
+        .form-panel { padding: 40px 30px; }
+        .side-panel img { width: 140px; height: 140px; }
       }
 
-      .demo-btn {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: var(--glass);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-        color: var(--text-main);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        transition: all 0.3s ease;
-      }
-
-      .demo-btn:hover {
-        background: var(--primary);
-        transform: scale(1.1);
-      }
-
-      .demo-card {
-        position: absolute;
-        bottom: 64px;
-        right: 0;
-        width: 280px;
-        background: rgba(15, 23, 42, 0.95);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        display: none;
-        animation: popUp 0.3s ease;
-      }
-
-      @keyframes popUp {
-        from { opacity: 0; transform: scale(0.9) translateY(20px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
-      }
-
+      .demo-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
+      .demo-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+      .demo-card { position: absolute; bottom: 54px; right: 0; width: 260px; background: #1f2937; border-radius: 12px; padding: 16px; display: none; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
       .demo-card.active { display: block; }
-      .demo-title { font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; }
-      .demo-list { list-style: none; }
-      .demo-item { 
-        padding: 8px 10px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 8px;
-        margin-bottom: 8px;
-        font-size: 12px;
-        display: flex;
-        justify-content: space-between;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-      .demo-item:hover { background: rgba(99, 102, 241, 0.2); }
-      .role-badge { 
-        padding: 2px 6px; 
-        border-radius: 4px; 
-        font-size: 10px; 
-        font-weight: 800; 
-        text-transform: uppercase;
-      }
-
-      @media (max-width: 480px) {
-        .login-container { padding: 15px; }
-        .glass-card { padding: 30px 20px; }
-      }
+      .demo-item { padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 6px; font-size: 12px; display: flex; justify-content: space-between; cursor: pointer; }
+      .demo-item:hover { background: var(--primary); }
     </style>
   </head>
   <body>
-    <!-- Background Accents -->
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
-    
-    <div class="login-container">
-      <div class="glass-card">
-        <div class="brand">
-          <div class="brand-icon">
-            <i class="fas fa-comment-dots"></i>
-          </div>
-          <h1>Simple Chat</h1>
-          <p class="brand-subtitle">Kết nối mọi lúc, mọi nơi</p>
+    <div class="split-container">
+      <!-- Left: 50% -->
+      <div class="side-panel">
+        <div class="side-content">
+          <img src="https://cdn1.iconfinder.com/data/icons/elevator/154/elevator-user-man-ui-round-login-1024.png" alt="Welcome Illustration">
+          <h2>Simple Chat</h2>
+          <p>Kết nối mọi lúc, mọi nơi. Tham gia cộng đồng để trải nghiệm nhắn tin thời gian thực mượt mà.</p>
+        </div>
+      </div>
+
+      <!-- Right: 50% -->
+      <div class="form-panel">
+        <div class="form-header">
+          <h1 id="pageTitle">Chào mừng trở lại!</h1>
+          <p id="pageSubtitle">Vui lòng đăng nhập để tiếp tục</p>
         </div>
 
         <div class="tabs">
@@ -420,25 +277,23 @@
         <div id="loginForm-container">
           <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
-              <label>TÊN ĐĂNG NHẬP</label>
+              <label>Tên đăng nhập</label>
               <div class="input-wrapper">
                 <i class="far fa-user"></i>
                 <input type="text" id="login-username" placeholder="Nhập tên đăng nhập" required>
               </div>
             </div>
-
-            <div class="form-group">
-              <label>MẬT KHẨU</label>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label>Mật khẩu</label>
               <div class="input-wrapper">
-                <i class="fas fa-fingerprint"></i>
+                <i class="fas fa-lock"></i>
                 <input type="password" id="login-password" placeholder="••••••••" required>
               </div>
             </div>
-
-            <a href="#" class="forgot-password">Quên mật khẩu?</a>
+            <a href="#" class="forgot-link">Quên mật khẩu?</a>
 
             <button type="submit" class="btn-submit">
-              Xác Nhận <i class="fas fa-arrow-right" style="font-size: 12px; margin-left: 8px"></i>
+              Đăng Nhập <i class="fas fa-arrow-right"></i>
             </button>
           </form>
 
@@ -447,12 +302,9 @@
           </div>
 
           <div class="social-login">
-            <button class="social-btn">
-              <i class="fab fa-google"></i> Google
-            </button>
-            <button class="social-btn">
-              <i class="fab fa-facebook"></i> Facebook
-            </button>
+            <button class="social-btn"><i class="fab fa-google" style="color: #ea4335"></i></button>
+            <button class="social-btn"><i class="fab fa-facebook-f" style="color: #1877f2"></i></button>
+            <button class="social-btn"><i class="fab fa-apple"></i></button>
           </div>
         </div>
 
@@ -460,104 +312,71 @@
         <div id="signupForm-container" style="display: none">
           <form id="signupForm" onsubmit="handleSignup(event)">
             <div class="form-group">
-              <label>HỌ & TÊN</label>
+              <label>Họ & Tên</label>
               <div class="input-wrapper">
-                <i class="far fa-id-card"></i>
+                <i class="far fa-address-card"></i>
                 <input type="text" id="signup-fullname" placeholder="Nguyễn Văn A" required>
               </div>
             </div>
-
             <div class="form-group">
-              <label>EMAIL</label>
+              <label>Email</label>
               <div class="input-wrapper">
                 <i class="far fa-envelope"></i>
-                <input type="email" id="signup-email" placeholder="example@email.com" required>
+                <input type="email" id="signup-email" placeholder="email@example.com" required>
               </div>
             </div>
-
             <div class="form-group">
-              <label>TÊN ĐĂNG NHẬP</label>
+              <label>Tên đăng nhập</label>
               <div class="input-wrapper">
                 <i class="far fa-user"></i>
                 <input type="text" id="signup-username" placeholder="username123" required>
               </div>
             </div>
-
-            <div class="form-group">
-              <label>MẬT KHẨU</label>
-              <div class="input-wrapper">
-                <i class="fas fa-fingerprint"></i>
-                <input type="password" id="signup-password" placeholder="Tối thiểu 6 ký tự" minlength="6" required>
+            <div style="display: flex; gap: 12px;">
+              <div class="form-group" style="flex: 1;">
+                <label>Mật khẩu</label>
+                <input type="password" id="signup-password" placeholder="••••••••" minlength="6" required>
               </div>
-            </div>
-
-             <div class="form-group">
-              <label>XÁC NHẬN MẬT KHẨU</label>
-              <div class="input-wrapper">
-                <i class="fas fa-shield-alt"></i>
+              <div class="form-group" style="flex: 1;">
+                <label>Xác nhận</label>
                 <input type="password" id="signup-confirm-password" placeholder="••••••••" required>
               </div>
             </div>
 
-            <button type="submit" class="btn-submit">Bắt Đầu Ngay</button>
+            <button type="submit" class="btn-submit" style="margin-top: 10px;">Đăng Ký Tài Khoản</button>
           </form>
-        </div>
-
-        <div class="login-footer">
-          <a href="#">Bản quyền © 2026</a>
-          <a href="#">Chính sách bảo mật</a>
-          <a href="#">Điều khoản sử dụng</a>
         </div>
       </div>
     </div>
 
-    <!-- Demo Access Floating Toggle -->
+    <!-- Demo Toggle -->
     <div class="demo-toggle">
-      <button class="demo-btn" onclick="toggleDemoCard()" title="Tài khoản Demo">
-        <i class="fas fa-key"></i>
-      </button>
+      <button class="demo-btn" onclick="toggleDemoCard()"><i class="fas fa-key"></i></button>
       <div id="demoCard" class="demo-card">
-        <div class="demo-title">🔑 Tài khoản Demo</div>
-        <div class="demo-list">
-          <div class="demo-item" onclick="fillDemo('admin', 'admin123')">
-            <span>admin</span>
-            <span class="role-badge" style="background:#ef4444">Admin</span>
-          </div>
-          <div class="demo-item" onclick="fillDemo('user1', 'user123')">
-            <span>user1</span>
-            <span class="role-badge" style="background:#3b82f6">User</span>
-          </div>
-          <div class="demo-item" onclick="fillDemo('mod1', 'mod123')">
-            <span>mod1</span>
-            <span class="role-badge" style="background:#f59e0b">Mod</span>
-          </div>
-        </div>
-        <div style="font-size: 10px; color: var(--text-dim); margin-top: 10px; text-align: center">
-          Nhấn để tự điền thông tin
-        </div>
+        <div style="font-weight:700; font-size:14px; margin-bottom:12px;">🔑 Tài khoản Demo</div>
+        <div class="demo-item" onclick="fillDemo('admin', 'admin123')"><span>admin (Admin)</span></div>
+        <div class="demo-item" onclick="fillDemo('user1', 'user123')"><span>user1 (User)</span></div>
+        <div class="demo-item" onclick="fillDemo('mod1', 'mod123')"><span>mod1 (Mod)</span></div>
       </div>
     </div>
 
     <script>
-      function toggleDemoCard() {
-        document.getElementById("demoCard").classList.toggle("active");
-      }
+      function toggleDemoCard() { document.getElementById("demoCard").classList.toggle("active"); }
 
-      function fillDemo(username, password) {
+      function fillDemo(u, p) {
         switchTab('login');
-        document.getElementById("login-username").value = username;
-        document.getElementById("login-password").value = password;
+        document.getElementById("login-username").value = u;
+        document.getElementById("login-password").value = p;
         toggleDemoCard();
       }
 
-      function switchTab(tabName) {
-        document.getElementById("loginForm-container").style.display = tabName === "login" ? "block" : "none";
-        document.getElementById("signupForm-container").style.display = tabName === "signup" ? "block" : "none";
-        
-        document.getElementById("loginTab").classList.toggle("active", tabName === "login");
-        document.getElementById("signupTab").classList.toggle("active", tabName === "signup");
-        
-        document.getElementById("loginAlert").className = "alert";
+      function switchTab(t) {
+        document.getElementById("loginForm-container").style.display = t === "login" ? "block" : "none";
+        document.getElementById("signupForm-container").style.display = t === "signup" ? "block" : "none";
+        document.getElementById("loginTab").classList.toggle("active", t === "login");
+        document.getElementById("signupTab").classList.toggle("active", t === "signup");
+        document.getElementById("pageTitle").innerText = t === "login" ? "Chào mừng trở lại!" : "Tạo tài khoản";
+        document.getElementById("pageSubtitle").innerText = t === "login" ? "Vui lòng đăng nhập để tiếp tục" : "Điền thông tin để bắt đầu trải nghiệm";
       }
 
       async function handleSignup(e) {
@@ -567,7 +386,6 @@
         const username = document.getElementById("signup-username").value.trim();
         const password = document.getElementById("signup-password").value;
         const confirmPassword = document.getElementById("signup-confirm-password").value;
-        const alert = document.getElementById("loginAlert");
 
         if (password !== confirmPassword) {
           showAlert("Mật khẩu xác nhận không khớp", "error");
@@ -597,11 +415,9 @@
         e.preventDefault();
         const username = document.getElementById("login-username").value.trim();
         const password = document.getElementById("login-password").value;
-        const alert = document.getElementById("loginAlert");
 
         try {
           showAlert("Đang xác thực...", "info");
-
           const response = await fetch("./api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -630,7 +446,8 @@
 
       function showAlert(msg, type) {
         const alert = document.getElementById("loginAlert");
-        alert.className = `alert alert-${type} show`;
+        alert.className = `alert alert-${type}`;
+        alert.style.display = "block";
         const icon = type === "error" ? "exclamation-circle" : (type === "success" ? "check-circle" : "spinner fa-spin");
         alert.innerHTML = `<i class="fas fa-${icon}"></i> <span>${msg}</span>`;
       }
