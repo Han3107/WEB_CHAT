@@ -199,6 +199,28 @@
         font-weight: bold;
         color: #667eea;
         margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .role-badge {
+        font-size: 9px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        color: white;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
+
+      .badge-mod {
+        background: #9b59b6; /* Purple */
+      }
+
+      .badge-admin {
+        background: #f1c40f; /* Gold */
+        color: #2c3e50;
       }
 
       .message {
@@ -284,6 +306,51 @@
       .empty-state-icon {
         font-size: 64px;
         margin-bottom: 20px;
+      }
+
+      .join-channel-overlay {
+        padding: 40px 20px;
+        background: #f8f9fa;
+        border-top: 1px solid #bdc3c7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        text-align: center;
+      }
+
+      .join-channel-overlay h3 {
+        color: #2c3e50;
+        margin-bottom: 5px;
+      }
+
+      .join-channel-overlay p {
+        color: #7f8c8d;
+        font-size: 14px;
+        max-width: 400px;
+        margin-bottom: 10px;
+      }
+
+      .btn-join-large {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-join-large:hover {
+        background: #5a67d8;
+        transform: translateY(-2px);
+      }
+
+      .btn-join-large:active {
+        transform: translateY(0);
       }
 
       @media (max-width: 768px) {
@@ -382,7 +449,14 @@
           </div>
         </div>
 
-        <div class="message-input-area">
+        <!-- Join Channel Overlay (hidden by default) -->
+        <div id="joinOverlay" class="join-channel-overlay" style="display: none;">
+          <h3>Bạn chưa tham gia kênh này</h3>
+          <p>Tham gia ngay để có thể đọc tin nhắn cũ và bắt đầu trò chuyện cùng mọi người!</p>
+          <button class="btn-join-large" onclick="joinChannelAPI()">🤝 Tham gia ngay</button>
+        </div>
+
+        <div class="message-input-area" id="messageInputArea">
           <div class="input-wrapper">
             <input
               type="text"
@@ -425,7 +499,11 @@
        */
       function loadChannels() {
         console.log("[DEBUG] Loading channels...");
-        fetch("/SimpleChatWebSocket/api/users/channels")
+        fetch("/SimpleChatWebSocket/api/users/channels", {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
           .then((response) => {
             console.log("[DEBUG] Channels response:", response.status);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -433,6 +511,10 @@
           })
           .then((data) => {
             console.log("[DEBUG] Channels data:", data);
+            if (data.debugInfo) {
+              console.log("[DIAGNOSTIC] Server context:");
+              console.table(data.debugInfo);
+            }
             if (data.channels) {
               const container = document.querySelector(".channels-section");
               const dmTitle = Array.from(
@@ -502,7 +584,11 @@
        */
       function loadDMUsers() {
         console.log("[DEBUG] Loading DM users...");
-        fetch("/SimpleChatWebSocket/api/users")
+        fetch("/SimpleChatWebSocket/api/users", {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
           .then((response) => {
             console.log("[DEBUG] Users response:", response.status);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -561,8 +647,26 @@
         document.getElementById("currentChannel").textContent =
           "# " + channelName;
 
-        // Load messages from API
-        loadMessagesFromAPI(channelId);
+        // Toggle Join UI
+        const channelData = channelMap[channelName];
+        console.log("[DEBUG] selectChannel:", channelName, "isMember:", channelData ? channelData.isMember : "UNDEFINED", "UserRole:", role);
+        const isJoined = (channelData && channelData.isMember) || (role && role.toLowerCase() === "admin");
+        
+        if (isJoined) {
+          document.getElementById("joinOverlay").style.display = "none";
+          document.getElementById("messageInputArea").style.display = "flex";
+          // Load messages from API
+          loadMessagesFromAPI(channelId);
+        } else {
+          document.getElementById("joinOverlay").style.display = "flex";
+          document.getElementById("messageInputArea").style.display = "none";
+          document.getElementById("messagesArea").innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🔒</div>
+              <div>Bạn phải tham gia kênh để xem nội dung</div>
+            </div>
+          `;
+        }
       }
 
       /**
@@ -572,6 +676,9 @@
         currentDMUser = dmUsername;
         currentChannel = null;
         isDirectMessage = true;
+
+        document.getElementById("joinOverlay").style.display = "none";
+        document.getElementById("messageInputArea").style.display = "flex";
 
         // Update active state
         document.querySelectorAll(".channel-item").forEach((item) => {
@@ -597,6 +704,11 @@
 
         fetch(
           `/SimpleChatWebSocket/api/users/dm/${dmUsername}?sender=${username}`,
+          {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          },
         )
           .then((response) => response.json())
           .then((data) => {
@@ -655,6 +767,11 @@
 
         fetch(
           `/SimpleChatWebSocket/api/users/channels/${channelId}/messages?page=0&size=100`,
+          {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          },
         )
           .then((response) => response.json())
           .then((data) => {
@@ -807,6 +924,34 @@
           .catch((error) => {
             console.error("[ERROR] Error sending DM:", error);
             alert("Lỗi gửi tin nhắn: " + error.message);
+          });
+      }
+
+      /**
+       * Join channel via API
+       */
+      function joinChannelAPI() {
+        const channelData = channelMap[currentChannel];
+        const channelId = channelData.channelId || channelData.id;
+        
+        fetch(`/SimpleChatWebSocket/api/users/channels/${channelId}/join`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+          }
+        })
+          .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
+          .then(data => {
+            alert("✅ " + data.message);
+            // Refresh channels and re-select current channel
+            loadChannels();
+          })
+          .catch(error => {
+            console.error("Join error:", error);
+            alert("Lỗi khi tham gia: " + error.message);
           });
       }
 

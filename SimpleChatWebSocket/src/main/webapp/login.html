@@ -4,538 +4,446 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Đăng Nhập - Simple Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       rel="stylesheet"
     />
     <style>
+      :root {
+        --primary: #6366f1;
+        --secondary: #4f46e5;
+        --bg-dark: #0f172a;
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass-border: rgba(255, 255, 255, 0.12);
+        --text-main: #f8fafc;
+        --text-dim: #94a3b8;
+      }
+
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
+
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-dark);
+        background-image: 
+          radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 20px;
+        overflow-x: hidden;
       }
-      .container {
-        display: flex;
-        gap: 30px;
-        max-width: 1200px;
+
+      .login-container {
         width: 100%;
+        max-width: 440px;
+        padding: 20px;
+        position: relative;
+        z-index: 10;
       }
-      .info-section {
-        flex: 1;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 500px;
+
+      .brand {
+        text-align: center;
+        margin-bottom: 32px;
       }
-      .app-title {
-        font-size: 48px;
-        font-weight: bold;
-        margin-bottom: 15px;
+
+      .brand-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 14px;
         display: flex;
         align-items: center;
-        gap: 15px;
-      }
-      .app-icon {
-        font-size: 56px;
-      }
-      .app-description {
-        font-size: 18px;
-        opacity: 0.9;
-        margin-bottom: 40px;
-        line-height: 1.6;
-      }
-      .features {
-        display: grid;
-        gap: 20px;
-      }
-      .feature-item {
-        display: flex;
-        gap: 15px;
-        align-items: flex-start;
-      }
-      .feature-icon {
+        justify-content: center;
         font-size: 24px;
-        min-width: 30px;
-        color: #fff;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
-      .feature-text h3 {
-        font-size: 16px;
-        margin-bottom: 5px;
-      }
-      .feature-text p {
-        font-size: 14px;
-        opacity: 0.85;
-      }
-      .login-section {
-        flex: 1;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        min-height: 600px;
-      }
-      .login-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 30px;
-        text-align: center;
+        margin: 0 auto 16px;
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
       }
-      .login-header h1 {
+
+      .brand h1 {
+        color: var(--text-main);
         font-size: 28px;
-        margin-bottom: 8px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
       }
-      .login-body {
-        padding: 40px 35px;
-        flex: 1;
-        overflow-y: auto;
+
+      .glass-card {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       }
+
       .tabs {
         display: flex;
-        gap: 10px;
-        margin-bottom: 30px;
-        border-bottom: 2px solid #ecf0f1;
+        margin-bottom: 32px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 4px;
+        border-radius: 12px;
       }
+
       .tab-btn {
-        padding: 12px 20px;
-        background: none;
+        flex: 1;
+        padding: 10px;
         border: none;
-        border-bottom: 3px solid transparent;
-        font-size: 14px;
+        background: transparent;
+        color: var(--text-dim);
         font-weight: 600;
-        color: #95a5a6;
+        font-size: 14px;
         cursor: pointer;
+        border-radius: 8px;
         transition: all 0.3s ease;
-        margin-bottom: -2px;
       }
+
       .tab-btn.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
       }
+
       .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
+
       .form-group label {
         display: block;
+        color: var(--text-dim);
+        font-size: 13px;
+        font-weight: 500;
         margin-bottom: 8px;
-        font-weight: 600;
-        color: #333;
-        font-size: 14px;
+        margin-left: 4px;
       }
+
+      .input-wrapper {
+        position: relative;
+      }
+
+      .input-wrapper i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-dim);
+        font-size: 16px;
+      }
+
       .form-group input {
         width: 100%;
-        padding: 12px 15px;
-        border: 2px solid #ecf0f1;
-        border-radius: 10px;
-        font-size: 14px;
+        padding: 14px 16px 14px 48px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        color: white;
         font-family: inherit;
-      }
-      .form-group input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      }
-      .demo-box {
-        background: #f0f7ff;
-        border: 2px solid #d4e6ff;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-      }
-      .demo-credentials {
-        display: grid;
-        gap: 8px;
-      }
-      .demo-item {
-        background: white;
-        padding: 10px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-family: "Courier New", monospace;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .demo-item .role {
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-weight: 600;
-        font-size: 11px;
-        white-space: nowrap;
-        color: white;
-      }
-      .role-admin {
-        background: #c62828;
-      }
-      .role-user {
-        background: #0277bd;
-      }
-      .role-moderator {
-        background: #f57c00;
-      }
-      .btn {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        font-size: 15px;
         transition: all 0.3s ease;
       }
-      .btn:hover {
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      }
+
+      .btn-submit {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 8px;
+      }
+
+      .btn-submit:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
       }
+
       .alert {
-        padding: 12px 15px;
-        border-radius: 10px;
+        padding: 12px 16px;
+        border-radius: 12px;
         margin-bottom: 20px;
-        display: none;
         font-size: 14px;
-        border-left: 4px solid;
+        display: none;
+        animation: slideIn 0.3s ease;
       }
-      .alert.show {
+
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .alert.show { display: flex; align-items: center; gap: 10px; }
+      .alert-error { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+      .alert-success { background: rgba(34, 197, 94, 0.1); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.2); }
+      .alert-info { background: rgba(59, 130, 246, 0.1); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.2); }
+
+      /* Demo Access Toggle */
+      .demo-toggle {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 100;
+      }
+
+      .demo-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        font-size: 20px;
+        transition: all 0.3s ease;
       }
-      .alert-success {
-        background: #e8f5e9;
-        color: #2e7d32;
-        border-left-color: #2e7d32;
+
+      .demo-btn:hover {
+        background: var(--primary);
+        transform: scale(1.1);
       }
-      .alert-error {
-        background: #ffebee;
-        color: #c62828;
-        border-left-color: #c62828;
+
+      .demo-card {
+        position: absolute;
+        bottom: 64px;
+        right: 0;
+        width: 280px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        display: none;
+        animation: popUp 0.3s ease;
       }
-      @media (max-width: 1024px) {
-        .container {
-          flex-direction: column;
-          gap: 20px;
-        }
+
+      @keyframes popUp {
+        from { opacity: 0; transform: scale(0.9) translateY(20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+
+      .demo-card.active { display: block; }
+      .demo-title { font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; }
+      .demo-list { list-style: none; }
+      .demo-item { 
+        padding: 8px 10px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .demo-item:hover { background: rgba(99, 102, 241, 0.2); }
+      .role-badge { 
+        padding: 2px 6px; 
+        border-radius: 4px; 
+        font-size: 10px; 
+        font-weight: 800; 
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 480px) {
+        .login-container { padding: 15px; }
+        .glass-card { padding: 30px 20px; }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="info-section">
-        <div class="app-title">
-          <span class="app-icon">💬</span>
-          <span>Simple Chat</span>
+    <!-- Background Orbs for extra flair -->
+    <div style="position:fixed; top: -10%; left: -10%; width: 40%; height: 40%; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); pointer-events:none;"></div>
+    
+    <div class="login-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fas fa-comment-dots"></i>
         </div>
-        <div class="app-description">
-          Nền tảng trò chuyện thời gian thực với hệ thống phân quyền RBAC đầy đủ
-        </div>
-        <div class="features">
-          <div class="feature-item">
-            <div class="feature-icon">🔐</div>
-            <div class="feature-text">
-              <h3>Bảo Mật Cao</h3>
-              <p>Mã hóa end-to-end cho tất cả tin nhắn</p>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">👥</div>
-            <div class="feature-text">
-              <h3>Phân Quyền RBAC</h3>
-              <p>3 vai trò: Admin, Moderator, User</p>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">⚡</div>
-            <div class="feature-text">
-              <h3>Thời Gian Thực</h3>
-              <p>WebSocket cho tin nhắn tức thì</p>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">📊</div>
-            <div class="feature-text">
-              <h3>Quản Lý</h3>
-              <p>Thống kê và kiểm soát toàn diện</p>
-            </div>
-          </div>
-        </div>
+        <h1>Simple Chat</h1>
       </div>
 
-      <div class="login-section">
-        <div class="login-header">
-          <h1>🔑 Đăng Nhập</h1>
-          <p>Chào mừng quay trở lại Simple Chat</p>
+      <div class="glass-card">
+        <div class="tabs">
+          <button id="loginTab" class="tab-btn active" onclick="switchTab('login')">Đăng Nhập</button>
+          <button id="signupTab" class="tab-btn" onclick="switchTab('signup')">Đăng Ký</button>
         </div>
 
-        <div class="login-body">
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('login', this)">
-              <i class="fas fa-sign-in-alt"></i> Đăng Nhập
-            </button>
-            <button class="tab-btn" onclick="switchTab('signup', this)">
-              <i class="fas fa-user-plus"></i> Đăng Ký
-            </button>
-          </div>
+        <div id="loginAlert" class="alert"></div>
 
-          <div id="loginAlert" class="alert"></div>
-
-          <!-- Login Form -->
-          <div id="loginForm-container">
-            <div class="demo-box">
-              <div style="font-weight: 700; margin-bottom: 12px">
-                📋 Tài Khoản Demo
-              </div>
-              <div class="demo-credentials">
-                <div class="demo-item">
-                  <span class="role role-admin">Admin</span>
-                  <span style="color: #667eea">admin / admin123</span>
-                </div>
-                <div class="demo-item">
-                  <span class="role role-user">User</span>
-                  <span style="color: #667eea">user1 / user123</span>
-                </div>
-                <div class="demo-item">
-                  <span class="role role-moderator">Moderator</span>
-                  <span style="color: #667eea">mod1 / mod123</span>
-                </div>
+        <!-- Login Form -->
+        <div id="loginForm-container">
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label>TÊN ĐĂNG NHẬP</label>
+              <div class="input-wrapper">
+                <i class="far fa-user"></i>
+                <input type="text" id="login-username" placeholder="Nhập tên đăng nhập" required>
               </div>
             </div>
 
-            <form id="loginForm" onsubmit="handleLogin(event)">
-              <div class="form-group">
-                <label for="login-username">
-                  <i class="fas fa-user"></i> Tên Đăng Nhập
-                </label>
-                <input
-                  type="text"
-                  id="login-username"
-                  placeholder="admin"
-                  value="admin"
-                  required
-                />
+            <div class="form-group">
+              <label>MẬT KHẨU</label>
+              <div class="input-wrapper">
+                <i class="fas fa-fingerprint"></i>
+                <input type="password" id="login-password" placeholder="••••••••" required>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="login-password">
-                  <i class="fas fa-lock"></i> Mật Khẩu
-                </label>
-                <input
-                  type="password"
-                  id="login-password"
-                  placeholder="admin123"
-                  value="admin123"
-                  required
-                />
+            <button type="submit" class="btn-submit">
+              Xác Nhận <i class="fas fa-arrow-right" style="font-size: 12px; margin-left: 8px"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupForm-container" style="display: none">
+          <form id="signupForm" onsubmit="handleSignup(event)">
+            <div class="form-group">
+              <label>HỌ & TÊN</label>
+              <div class="input-wrapper">
+                <i class="far fa-id-card"></i>
+                <input type="text" id="signup-fullname" placeholder="Nguyễn Văn A" required>
               </div>
+            </div>
 
-              <button type="submit" class="btn">🚀 Đăng Nhập</button>
-            </form>
+            <div class="form-group">
+              <label>EMAIL</label>
+              <div class="input-wrapper">
+                <i class="far fa-envelope"></i>
+                <input type="email" id="signup-email" placeholder="example@email.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>TÊN ĐĂNG NHẬP</label>
+              <div class="input-wrapper">
+                <i class="far fa-user"></i>
+                <input type="text" id="signup-username" placeholder="username123" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>MẬT KHẨU</label>
+              <div class="input-wrapper">
+                <i class="fas fa-fingerprint"></i>
+                <input type="password" id="signup-password" placeholder="Tối thiểu 6 ký tự" minlength="6" required>
+              </div>
+            </div>
+
+             <div class="form-group">
+              <label>XÁC NHẬN MẬT KHẨU</label>
+              <div class="input-wrapper">
+                <i class="fas fa-shield-alt"></i>
+                <input type="password" id="signup-confirm-password" placeholder="••••••••" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Bắt Đầu Ngay</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo Access Floating Toggle -->
+    <div class="demo-toggle">
+      <button class="demo-btn" onclick="toggleDemoCard()" title="Tài khoản Demo">
+        <i class="fas fa-key"></i>
+      </button>
+      <div id="demoCard" class="demo-card">
+        <div class="demo-title">🔑 Tài khoản Demo</div>
+        <div class="demo-list">
+          <div class="demo-item" onclick="fillDemo('admin', 'admin123')">
+            <span>admin</span>
+            <span class="role-badge" style="background:#ef4444">Admin</span>
           </div>
-
-          <!-- Signup Form -->
-          <div id="signupForm-container" style="display: none">
-            <form id="signupForm" onsubmit="handleSignup(event)">
-              <div class="form-group">
-                <label for="signup-fullname">
-                  <i class="fas fa-id-card"></i> Họ & Tên
-                </label>
-                <input
-                  type="text"
-                  id="signup-fullname"
-                  placeholder="Nguyễn Văn A"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="signup-email">
-                  <i class="fas fa-envelope"></i> Email
-                </label>
-                <input
-                  type="email"
-                  id="signup-email"
-                  placeholder="user@example.com"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="signup-username">
-                  <i class="fas fa-user"></i> Tên Đăng Nhập
-                </label>
-                <input
-                  type="text"
-                  id="signup-username"
-                  placeholder="username123"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="signup-password">
-                  <i class="fas fa-lock"></i> Mật Khẩu
-                </label>
-                <input
-                  type="password"
-                  id="signup-password"
-                  placeholder="Tối thiểu 6 ký tự"
-                  minlength="6"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="signup-confirm-password">
-                  <i class="fas fa-lock"></i> Xác Nhận Mật Khẩu
-                </label>
-                <input
-                  type="password"
-                  id="signup-confirm-password"
-                  placeholder="Nhập lại mật khẩu"
-                  required
-                />
-              </div>
-
-              <button type="submit" class="btn">📝 Đăng Ký</button>
-            </form>
+          <div class="demo-item" onclick="fillDemo('user1', 'user123')">
+            <span>user1</span>
+            <span class="role-badge" style="background:#3b82f6">User</span>
           </div>
+          <div class="demo-item" onclick="fillDemo('mod1', 'mod123')">
+            <span>mod1</span>
+            <span class="role-badge" style="background:#f59e0b">Mod</span>
+          </div>
+        </div>
+        <div style="font-size: 10px; color: var(--text-dim); margin-top: 10px; text-align: center">
+          Nhấn để tự điền thông tin
         </div>
       </div>
     </div>
 
     <script>
-      function switchTab(tabName, button) {
-        // Hide all forms
-        document.getElementById("loginForm-container").style.display = "none";
-        document.getElementById("signupForm-container").style.display = "none";
+      function toggleDemoCard() {
+        document.getElementById("demoCard").classList.toggle("active");
+      }
 
-        // Remove active class from all tabs
-        document.querySelectorAll(".tab-btn").forEach((btn) => {
-          btn.classList.remove("active");
-        });
+      function fillDemo(username, password) {
+        switchTab('login');
+        document.getElementById("login-username").value = username;
+        document.getElementById("login-password").value = password;
+        toggleDemoCard();
+      }
 
-        // Show selected form
-        if (tabName === "login") {
-          document.getElementById("loginForm-container").style.display =
-            "block";
-        } else {
-          document.getElementById("signupForm-container").style.display =
-            "block";
-        }
-
-        // Add active class to clicked button
-        button.classList.add("active");
+      function switchTab(tabName) {
+        document.getElementById("loginForm-container").style.display = tabName === "login" ? "block" : "none";
+        document.getElementById("signupForm-container").style.display = tabName === "signup" ? "block" : "none";
+        
+        document.getElementById("loginTab").classList.toggle("active", tabName === "login");
+        document.getElementById("signupTab").classList.toggle("active", tabName === "signup");
+        
+        document.getElementById("loginAlert").className = "alert";
       }
 
       async function handleSignup(e) {
         e.preventDefault();
-        const fullName = document
-          .getElementById("signup-fullname")
-          .value.trim();
+        const fullName = document.getElementById("signup-fullname").value.trim();
         const email = document.getElementById("signup-email").value.trim();
-        const username = document
-          .getElementById("signup-username")
-          .value.trim();
+        const username = document.getElementById("signup-username").value.trim();
         const password = document.getElementById("signup-password").value;
-        const confirmPassword = document.getElementById(
-          "signup-confirm-password",
-        ).value;
+        const confirmPassword = document.getElementById("signup-confirm-password").value;
         const alert = document.getElementById("loginAlert");
 
-        // Validation
-        if (!fullName || !email || !username || !password || !confirmPassword) {
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Vui lòng điền đủ thông tin</span>';
-          return;
-        }
-
-        if (password.length < 6) {
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Mật khẩu phải có ít nhất 6 ký tự</span>';
-          return;
-        }
-
         if (password !== confirmPassword) {
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Mật khẩu xác nhận không khớp</span>';
-          return;
-        }
-
-        if (!email.includes("@")) {
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Email không hợp lệ</span>';
+          showAlert("Mật khẩu xác nhận không khớp", "error");
           return;
         }
 
         try {
-          alert.className = "alert alert-info show";
-          alert.innerHTML =
-            '<i class="fas fa-spinner fa-spin"></i> <span>Đang đăng ký...</span>';
-
+          showAlert("Đang đăng ký...", "info");
           const response = await fetch("./api/auth/signup", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              username: username,
-              password: password,
-              email: email,
-              fullName: fullName,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, email, fullName }),
           });
 
           const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Đăng ký thất bại");
 
-          if (!response.ok) {
-            alert.className = "alert alert-error show";
-            alert.innerHTML =
-              '<i class="fas fa-exclamation-circle"></i> <span>' +
-              (data.message || "Đăng ký thất bại") +
-              "</span>";
-            return;
-          }
-
-          // Success
-          alert.className = "alert alert-success show";
-          alert.innerHTML =
-            '<i class="fas fa-check-circle"></i> <span>' +
-            data.message +
-            "</span>";
-
-          // Reset form
+          showAlert(data.message, "success");
           document.getElementById("signupForm").reset();
-
-          // Switch to login tab after 2 seconds
-          setTimeout(() => {
-            const loginBtn = document.querySelectorAll(".tab-btn")[0];
-            switchTab("login", loginBtn);
-            document.getElementById("loginAlert").innerHTML = "";
-          }, 2000);
+          setTimeout(() => switchTab("login"), 2000);
         } catch (err) {
-          console.error("Signup error:", err);
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Lỗi kết nối: ' +
-            err.message +
-            "</span>";
+          showAlert(err.message, "error");
         }
       }
 
@@ -545,66 +453,40 @@
         const password = document.getElementById("login-password").value;
         const alert = document.getElementById("loginAlert");
 
-        if (!username || !password) {
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Vui lòng nhập username và password</span>';
-          return;
-        }
-
         try {
-          alert.className = "alert alert-info show";
-          alert.innerHTML =
-            '<i class="fas fa-spinner fa-spin"></i> <span>Đang xác thực...</span>';
+          showAlert("Đang xác thực...", "info");
 
           const response = await fetch("./api/auth/login", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              username: username,
-              password: password,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
           });
 
           if (!response.ok) {
             const error = await response.json();
-            alert.className = "alert alert-error show";
-            alert.innerHTML =
-              '<i class="fas fa-exclamation-circle"></i> <span>' +
-              (error.message || "Tên đăng nhập hoặc mật khẩu không đúng") +
-              "</span>";
-            return;
+            throw new Error(error.message || "Thông tin đăng nhập không chính xác");
           }
 
           const data = await response.json();
+          showAlert("Đăng nhập thành công!", "success");
 
-          // Success!
-          alert.className = "alert alert-success show";
-          alert.innerHTML =
-            '<i class="fas fa-check-circle"></i> <span>✓ Đăng nhập thành công!</span>';
-
-          // Save to localStorage
           localStorage.setItem("token", data.token);
           localStorage.setItem("username", data.username);
           localStorage.setItem("role", data.role);
 
-          console.log("✓ Token saved. Role:", data.role, "Redirecting...");
-
-          // Redirect immediately using replace (no history entry)
-          const redirectUrl =
-            data.role === "admin" ? "admin-dashboard.html" : "chat.html";
-          console.log("Redirect URL:", redirectUrl);
-          window.location.replace(redirectUrl);
+          setTimeout(() => {
+            window.location.replace(data.role === "admin" ? "admin-dashboard.html" : "chat.html");
+          }, 800);
         } catch (err) {
-          console.error("Login error:", err);
-          alert.className = "alert alert-error show";
-          alert.innerHTML =
-            '<i class="fas fa-exclamation-circle"></i> <span>Lỗi kết nối: ' +
-            err.message +
-            "</span>";
+          showAlert(err.message, "error");
         }
+      }
+
+      function showAlert(msg, type) {
+        const alert = document.getElementById("loginAlert");
+        alert.className = `alert alert-${type} show`;
+        const icon = type === "error" ? "exclamation-circle" : (type === "success" ? "check-circle" : "spinner fa-spin");
+        alert.innerHTML = `<i class="fas fa-${icon}"></i> <span>${msg}</span>`;
       }
     </script>
   </body>

@@ -107,6 +107,12 @@ public class UserController extends BaseController {
         // if (permCheck != null) return permCheck;
         
         try {
+            LoginResponse currentUser = getCurrentUser();
+            User user = (currentUser != null) ? userRepository.findByUsername(currentUser.getUsername()).orElse(null) : null;
+            
+            System.out.println("[DEBUG] getUserChannels: currentUser=" + (currentUser != null ? currentUser.getUsername() : "null") + 
+                               ", dbUserFound=" + (user != null));
+
             List<Channel> channels = channelRepository.findAll();
             List<Map<String, Object>> channelList = channels.stream().map(channel -> {
                 Map<String, Object> channelMap = new HashMap<>();
@@ -122,10 +128,29 @@ public class UserController extends BaseController {
                 
                 // Calculate real messageCount from messages table
                 long realMessageCount = messageRepository.findAll().stream()
-                    .filter(m -> m.getChannel().getChannelId() == channel.getChannelId())
+                    .filter(m -> m.getChannel().getChannelId().equals(channel.getChannelId()))
                     .count();
                 channelMap.put("messageCount", realMessageCount);
                 
+                // Check if current user is member
+                boolean isMember = false;
+                if (user != null) {
+                    isMember = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(
+                        channel.getChannelId(), user.getUserId()).isPresent();
+                    
+                    // Admin always has access
+                    String roleStr = user.getRole();
+                    if (roleStr != null && roleStr.equalsIgnoreCase("admin")) {
+                        isMember = true;
+                    }
+                }
+                
+                System.out.println("[DEBUG] Channel #" + channel.getChannelId() + " (" + channel.getChannelName() + 
+                                   ") for user: " + (user != null ? (user.getUsername() + " [Role=" + user.getRole() + "]") : "GUEST") + 
+                                   ", isMember=" + isMember);
+                
+                channelMap.put("isMember", isMember);
+
                 channelMap.put("isActive", channel.getIsActive());
                 channelMap.put("createdAt", channel.getCreatedAt());
                 return channelMap;
@@ -134,6 +159,15 @@ public class UserController extends BaseController {
             Map<String, Object> response = new HashMap<>();
             response.put("channels", channelList);
             response.put("count", channelList.size());
+            
+            // Diagnostic info
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("usernameInToken", currentUser != null ? currentUser.getUsername() : "NONE");
+            debugInfo.put("dbUserFound", user != null);
+            debugInfo.put("dbUserId", user != null ? user.getUserId() : "N/A");
+            debugInfo.put("dbUserRole", user != null ? user.getRole() : "N/A");
+            response.put("debugInfo", debugInfo);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
@@ -159,6 +193,7 @@ public class UserController extends BaseController {
                     msgMap.put("sender", message.getUser().getUsername());
                     msgMap.put("content", message.getContent());
                     msgMap.put("createdAt", message.getCreatedAt());
+                    msgMap.put("role", message.getUser().getRole());
                     return msgMap;
                 })
                 .collect(Collectors.toList());
@@ -210,6 +245,16 @@ public class UserController extends BaseController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", true, "message", "Không tìm thấy user"));
             }
+
+            // Check membership
+            boolean isMember = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(
+                channelId, user.getUserId()).isPresent();
+            
+            String roleStr = user.getRole();
+            if (!isMember && (roleStr == null || !roleStr.equalsIgnoreCase("admin"))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", true, "message", "Bạn phải tham gia kênh trước khi nhắn tin"));
+            }
             
             Message message = new Message();
             message.setChannel(channel);
@@ -225,6 +270,7 @@ public class UserController extends BaseController {
             response.put("sender", savedMessage.getUser().getUsername());
             response.put("content", savedMessage.getContent());
             response.put("createdAt", savedMessage.getCreatedAt());
+            response.put("role", savedMessage.getUser().getRole());
             response.put("message", "Tin nhắn đã được gửi thành công");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
@@ -262,14 +308,35 @@ public class UserController extends BaseController {
      */
     @PostMapping("/channels/{channelId}/join")
     public ResponseEntity<?> joinChannel(@PathVariable int channelId) {
-        ResponseEntity<?> permCheck = requirePermission(Permission.USER_JOIN_CHANNEL);
-        if (permCheck != null) return permCheck;
-        
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+
+        LoginResponse currentUser = getCurrentUser();
+        User user = userRepository.findByUsername(currentUser.getUsername()).orElse(null);
+        Channel channel = channelRepository.findById(channelId).orElse(null);
+
+        if (user == null || channel == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", true, "message", "User hoặc Channel không tồn tại"));
+        }
+
+        // Check if already a member
+        if (channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).isPresent()) {
+            return ResponseEntity.ok(Map.of("message", "Bạn đã là thành viên của kênh này"));
+        }
+
+        com.simplechat.entity.ChannelMember membership = new com.simplechat.entity.ChannelMember();
+        membership.setChannel(channel);
+        membership.setUser(user);
+        membership.setRole("member");
+        membership.setJoinedAt(LocalDateTime.now());
+
+        channelMemberRepository.save(membership);
+
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Bạn đã tham gia kênh thành công");
         response.put("channelId", channelId);
-        response.put("username", getCurrentUser().getUsername());
-        response.put("joinedAt", System.currentTimeMillis());
+        response.put("username", user.getUsername());
         return ResponseEntity.ok(response);
     }
     
@@ -355,6 +422,7 @@ public class UserController extends BaseController {
                     msgMap.put("sender", msg.getUser().getUsername());
                     msgMap.put("content", msg.getContent());
                     msgMap.put("createdAt", msg.getCreatedAt());
+                    msgMap.put("role", msg.getUser().getRole());
                     return msgMap;
                 })
                 .collect(Collectors.toList());
@@ -427,6 +495,7 @@ public class UserController extends BaseController {
             response.put("recipient", recipientUsername);
             response.put("content", savedMessage.getContent());
             response.put("createdAt", savedMessage.getCreatedAt());
+            response.put("role", savedMessage.getUser().getRole());
             response.put("message", "Tin nhắn đã được gửi");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {

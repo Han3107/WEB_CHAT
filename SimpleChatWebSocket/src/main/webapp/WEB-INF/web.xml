@@ -12,5 +12,9 @@
     <listener>
         <listener-class>org.apache.tomcat.websocket.server.WsContextListener</listener-class>
     </listener>
+    <!-- Welcome file configuration -->
+    <welcome-file-list>
+        <welcome-file>login.html</welcome-file>
+    </welcome-file-list>
     
 </web-app>

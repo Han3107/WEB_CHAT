@@ -29,6 +29,7 @@ public class AuthorizationInterceptor implements HandlerInterceptor {
                 if (parts.length >= 2) {
                     String username = parts[0];
                     String role = parts[1];
+                    System.out.println("[DEBUG] Token decoded: user=" + username + ", role=" + role);
                     
                     // Set user vào context
                     LoginResponse user = new LoginResponse();
