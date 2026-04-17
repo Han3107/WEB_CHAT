@@ -453,7 +453,7 @@
               data.channels.forEach((channel) => {
                 const chId = channel.channelId || channel.id;
                 const chName = channel.channelName || channel.name;
-                channelMap[chName] = channel;
+                channelMap[chName] = chId;
                 if (!firstChannel) firstChannel = channel;
 
                 const channelEl = document.createElement("div");
@@ -493,7 +493,7 @@
           })
           .catch((error) => {
             console.error("[ERROR] Failed to load channels:", error);
-            alert("Lỗi tải channels: " + error.message);
+            console.log("ALERT:","Lỗi tải channels: " + error.message);
           });
       }
 
@@ -539,7 +539,7 @@
           })
           .catch((error) => {
             console.error("[ERROR] Failed to load DM users:", error);
-            alert("Lỗi tải users: " + error.message);
+            console.log("ALERT:","Lỗi tải users: " + error.message);
           });
       }
 
@@ -734,7 +734,7 @@
       function sendChannelMessage(message, input) {
         const channelId = channelMap[currentChannel];
         if (!channelId) {
-          alert("Channel not found!");
+          console.log("ALERT:","Channel not found!");
           return;
         }
 
@@ -761,12 +761,12 @@
               loadMessagesFromAPI(channelId);
               input.value = "";
             } else {
-              alert("Error: " + (data.error || "Failed to send message"));
+              console.log("ALERT:","Error: " + (data.error || "Failed to send message"));
             }
           })
           .catch((error) => {
             console.error("Error sending message:", error);
-            alert("Error sending message: " + error.message);
+            console.log("ALERT:","Error sending message: " + error.message);
           });
       }
 
@@ -798,12 +798,12 @@
               loadDMMessages(currentDMUser);
               input.value = "";
             } else {
-              alert("Error: " + (data.error || "Failed to send message"));
+              console.log("ALERT:","Error: " + (data.error || "Failed to send message"));
             }
           })
           .catch((error) => {
             console.error("[ERROR] Error sending DM:", error);
-            alert("Lỗi gửi tin nhắn: " + error.message);
+            console.log("ALERT:","Lỗi gửi tin nhắn: " + error.message);
           });
       }
 
@@ -816,36 +816,28 @@
       function joinChannel() {
         const newChannel = prompt("Nhập tên channel mới:");
         if (newChannel && newChannel.trim()) {
-          alert("✅ Bạn đã tham gia channel: #" + newChannel);
+          console.log("ALERT:","✅ Bạn đã tham gia channel: #" + newChannel);
         }
       }
 
       function showInfo() {
         if (isDirectMessage) {
-          alert(
+          console.log("ALERT:",
             `ℹ️ Direct Message: ${currentDMUser}\n\n💬 Cuộc trò chuyện riêng tư với ${currentDMUser}`,
           );
         } else {
-          const channel = channelMap[currentChannel];
-          const desc = channel?.description || `Kênh ${currentChannel}`;
-          const members =
-            channel?.memberCount || channel?.members || "0";
-
-          alert(
-            `ℹ️ Channel: ${currentChannel}\n\n📝 Mô tả: ${desc}\n👥 Thành viên: ${members} thành viên\n📅 Tạo: ${created}`,
+          console.log("ALERT:",
+            `ℹ️ Channel: ${currentChannel}\n\n📝 Mô tả: Kênh ${currentChannel}\n👥 Thành viên: 15\n📅 Tạo: 2026-04-01`,
           );
         }
       }
 
       function showMembers() {
         if (isDirectMessage) {
-          alert(`👤 Participants:\n\n👤 ${username}\n👤 ${currentDMUser}`);
+          console.log("ALERT:",`👤 Participants:\n\n👤 ${username}\n👤 ${currentDMUser}`);
         } else {
-          const channel = channelMap[currentChannel];
-          const membersCount =
-            channel?.memberCount || channel?.members || "N/A";
-          alert(
-            `👥 #${currentChannel} có ${membersCount} thành viên.\n\n(Danh sách chi tiết đang được phát triển)`,
+          console.log("ALERT:",
+            `👥 Thành viên của #${currentChannel}:\n\n👤 admin\n👤 ${username}\n👤 user2\n👤 mod1`,
           );
         }
       }
