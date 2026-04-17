@@ -732,7 +732,10 @@
        * Send message to channel
        */
       function sendChannelMessage(message, input) {
-        const channelId = channelMap[currentChannel];
+        const channelData = channelMap[currentChannel];
+        const channelId = channelData
+          ? channelData.channelId || channelData.id
+          : null;
         if (!channelId) {
           alert("Channel not found!");
           return;
@@ -830,6 +833,9 @@
           const desc = channel?.description || `Kênh ${currentChannel}`;
           const members =
             channel?.memberCount || channel?.members || "0";
+          const created = channel?.createdAt
+            ? channel.createdAt.split("T")[0]
+            : "N/A";
 
           alert(
             `ℹ️ Channel: ${currentChannel}\n\n📝 Mô tả: ${desc}\n👥 Thành viên: ${members} thành viên\n📅 Tạo: ${created}`,

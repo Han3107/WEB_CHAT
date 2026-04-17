@@ -191,7 +191,12 @@ public class UserController extends BaseController {
                     .body(Map.of("error", true, "message", "Vui lòng đăng nhập trước"));
             }
             
-            int channelId = (int) messageData.get("channelId");
+            Object channelIdObj = messageData.get("channelId");
+            if (channelIdObj == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", true, "message", "Thiếu thông tin channelId"));
+            }
+            int channelId = Integer.parseInt(channelIdObj.toString());
             String content = (String) messageData.get("content");
             
             Channel channel = channelRepository.findById(channelId).orElse(null);
@@ -223,9 +228,11 @@ public class UserController extends BaseController {
             response.put("message", "Tin nhắn đã được gửi thành công");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
+            System.err.println("[ERROR] sendMessage failed: " + e.getMessage());
+            e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("error", true);
-            error.put("message", "Lỗi khi gửi tin nhắn: " + e.getMessage());
+            error.put("message", "Lỗi server khi gửi tin nhắn: " + e.getMessage());
             return ResponseEntity.status(500).body(error);
         }
     }

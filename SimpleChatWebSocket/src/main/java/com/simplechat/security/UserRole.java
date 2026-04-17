@@ -26,7 +26,7 @@ public enum UserRole {
     
     public static UserRole fromCode(String code) {
         for (UserRole role : UserRole.values()) {
-            if (role.code.equals(code)) {
+            if (role.code.equalsIgnoreCase(code)) {
                 return role;
             }
         }
