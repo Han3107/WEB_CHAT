@@ -129,6 +129,34 @@ public class AdminController extends BaseController {
     }
     
     /**
+     * Cập nhật thông tin user
+     * PUT /api/admin/users/{username}
+     */
+    @PutMapping("/users/{username}")
+    public ResponseEntity<?> updateUser(@PathVariable String username, @RequestBody Map<String, String> payload) {
+        try {
+            var user = userRepository.findByUsername(username);
+            if (user.isEmpty()) {
+                return buildErrorResponse("User không tồn tại");
+            }
+            
+            User u = user.get();
+            if (payload.containsKey("email")) u.setEmail(payload.get("email"));
+            if (payload.containsKey("fullName")) u.setFullName(payload.get("fullName"));
+            if (payload.containsKey("role")) u.setRole(payload.get("role"));
+            if (payload.containsKey("status")) u.setStatus(payload.get("status"));
+            
+            userRepository.save(u);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Thông tin user " + username + " đã được cập nhật");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return buildErrorResponse("Lỗi khi cập nhật user: " + e.getMessage());
+        }
+    }
+
+    /**
      * Ban user
      * POST /api/admin/users/{username}/ban
      */

@@ -620,18 +620,23 @@
         <div id="channels" class="content-section">
           <h2 class="section-title">💬 Quản Lý Channels</h2>
 
-          <button class="btn btn-primary" onclick="addChannel()">
-            ➕ Channel Mới
-          </button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="search-box" style="margin-bottom: 0;">
+              <input type="text" placeholder="🔍 Tìm kiếm channel..." onkeyup="filterTable('channelsTable')" />
+            </div>
+            <button class="btn btn-success" onclick="openChannelModal()" style="padding: 10px 20px;">
+              ➕ Tạo Channel Mới
+            </button>
+          </div>
 
-          <table style="margin-top: 20px" id="channelsTable">
+          <table id="channelsTable">
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Tên Channel</th>
                 <th>Mô Tả</th>
                 <th>Thành Viên</th>
                 <th>Tin Nhắn</th>
-                <th>Tạo Lúc</th>
                 <th>Hành Động</th>
               </tr>
             </thead>
@@ -864,9 +869,9 @@
                   <td>${user.email || user.username + "@simplechat.com"}</td>
                   <td><span class="badge ${roleClass}">${roleText}</span></td>
                   <td><span class="badge ${statusBadge}">${statusText}</span></td>
-                  <td>${user.joinedDate || "2026-04-01"}</td>
+                  <td>${user.joinedDate || (user.createdAt ? user.createdAt.split('T')[0] : "2026-04-01")}</td>
                   <td>
-                    <button class="btn btn-primary" onclick="viewUserDetail('${user.username}')">Chi Tiết</button>
+                    <button class="btn btn-primary" onclick="openUserModal(${JSON.stringify(user).replace(/"/g, '&quot;')})">Sửa</button>
                     ${
                       user.status === "active"
                         ? `<button class="btn btn-danger" onclick="banUser('${user.username}')">Ban</button>`
@@ -912,14 +917,14 @@
               .map(
                 (channel, idx) => `
               <tr>
-                <td># ${channel.channelName || channel.name}</td>
-                <td>${channel.description}</td>
-                <td><strong>${channel.memberCount || channel.members || 0}</strong></td>
-                <td>${channel.messageCount || 0}</td>
-                <td>${channel.createdAt ? channel.createdAt.split("T")[0] : "2026-04-01"}</td>
+                <td>${channel.channelId || idx + 1}</td>
+                <td><strong># ${channel.channelName || channel.name}</strong></td>
+                <td>${channel.description || '<i style="color:#999">Không có mô tả</i>'}</td>
+                <td><span class="badge badge-user">${channel.memberCount || channel.members || 0}</span></td>
+                <td><span class="badge badge-mod">${channel.messageCount || 0}</span></td>
                 <td>
-                  <button class="btn btn-primary" onclick="editChannel('${channel.channelName || channel.name}')">Edit</button>
-                  <button class="btn btn-danger" onclick="deleteChannel('${channel.channelName || channel.name}')">Delete</button>
+                  <button class="btn btn-primary" onclick="openChannelModal(${JSON.stringify(channel).replace(/"/g, '&quot;')})">Sửa</button>
+                  <button class="btn btn-danger" onclick="deleteChannel(${channel.channelId}, '${channel.channelName || channel.name}')">Xóa</button>
                 </td>
               </tr>
             `,
@@ -1100,6 +1105,54 @@
         document.getElementById("userDetailModal").classList.remove("active");
       }
 
+      // ===== USER MANAGEMENT =====
+      let currentEditingUsername = null;
+
+      function openUserModal(user) {
+        const modal = document.getElementById("userFormModal");
+        currentEditingUsername = user.username;
+
+        document.getElementById("userFormTitle").textContent = `✏️ Sửa User: ${user.username}`;
+        document.getElementById("editUserEmail").value = user.email || "";
+        document.getElementById("editUserFullName").value = user.fullName || "";
+        document.getElementById("editUserRole").value = user.role || "user";
+        document.getElementById("editUserStatus").value = user.status || "active";
+
+        modal.classList.add("active");
+      }
+
+      function closeUserModal() {
+        document.getElementById("userFormModal").classList.remove("active");
+      }
+
+      async function saveUser() {
+        const email = document.getElementById("editUserEmail").value.trim();
+        const fullName = document.getElementById("editUserFullName").value.trim();
+        const role = document.getElementById("editUserRole").value;
+        const status = document.getElementById("editUserStatus").value;
+
+        try {
+          const response = await fetch(`${API_BASE}/admin/users/${currentEditingUsername}`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, fullName, role, status }),
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = await response.json();
+          alert(`✅ ${data.message}`);
+          closeUserModal();
+          loadUsers();
+          loadAnalytics();
+        } catch (error) {
+          alert(`❌ Lỗi: ${error.message}`);
+        }
+      }
+
       async function banUser(username) {
         const reason = prompt(`Nhập lý do ban ${username}:`);
         if (!reason) return;
@@ -1141,53 +1194,103 @@
         }
       }
 
-      async function editChannel(channelName) {
-        const description = prompt(
-          `Cập nhật mô tả cho channel ${channelName}:`,
-        );
-        if (description === null) return;
+      // ===== CHANNEL MANAGEMENT =====
+      let currentEditingChannelId = null;
+
+      function openChannelModal(channel = null) {
+        const modal = document.getElementById("channelFormModal");
+        const title = document.getElementById("channelModalTitle");
+        const nameInput = document.getElementById("channelNameInput");
+        const descInput = document.getElementById("channelDescInput");
+        const typeInput = document.getElementById("channelTypeInput");
+
+        if (channel) {
+          // Mode: Edit
+          currentEditingChannelId = channel.channelId;
+          title.textContent = "✏️ Chỉnh Sửa Channel";
+          nameInput.value = channel.channelName || channel.name || "";
+          descInput.value = channel.description || "";
+          typeInput.value = channel.channelType || "public";
+        } else {
+          // Mode: Add
+          currentEditingChannelId = null;
+          title.textContent = "➕ Tạo Channel Mới";
+          nameInput.value = "";
+          descInput.value = "";
+          typeInput.value = "public";
+        }
+
+        modal.classList.add("active");
+      }
+
+      function closeChannelModal() {
+        document.getElementById("channelFormModal").classList.remove("active");
+      }
+
+      async function saveChannel() {
+        const name = document.getElementById("channelNameInput").value.trim();
+        const desc = document.getElementById("channelDescInput").value.trim();
+        const type = document.getElementById("channelTypeInput").value;
+
+        if (!name) {
+          alert("Vui lòng nhập tên channel!");
+          return;
+        }
+
+        const isEdit = currentEditingChannelId !== null;
+        const url = isEdit
+          ? `${API_BASE}/admin/channels/${currentEditingChannelId}`
+          : `${API_BASE}/admin/channels`;
+        const method = isEdit ? "PUT" : "POST";
 
         try {
-          const response = await fetch(`${API_BASE}/admin/channels/1`, {
-            method: "PUT",
+          const response = await fetch(url, {
+            method: method,
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              channelName: channelName,
-              description: description,
+              channelName: name,
+              description: desc,
+              channelType: type,
             }),
           });
 
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
           const data = await response.json();
-          alert(`✅ ${data.message}`);
+          alert(`✅ ${data.message || "Thành công!"}`);
+          closeChannelModal();
           loadChannels();
+          loadAnalytics();
         } catch (error) {
           alert(`❌ Lỗi: ${error.message}`);
         }
       }
 
-      async function deleteChannel(channelName) {
-        if (!confirm(`Bạn có chắc chắn muốn xóa channel ${channelName}?`))
+      async function deleteChannel(channelId, channelName) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa channel #${channelName}?`))
           return;
 
         try {
-          const response = await fetch(`${API_BASE}/admin/channels/1/delete`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
+          const response = await fetch(
+            `${API_BASE}/admin/channels/${channelId}/delete`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             },
-          });
+          );
 
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
           const data = await response.json();
           alert(`✅ ${data.message}`);
           loadChannels();
+          loadAnalytics();
         } catch (error) {
           alert(`❌ Lỗi: ${error.message}`);
         }
@@ -1224,35 +1327,7 @@
         });
       }
 
-      async function addChannel() {
-        const channelName = prompt("Nhập tên channel:");
-        if (!channelName || channelName.trim() === "") return;
-
-        const description = prompt("Nhập mô tả (tuỳ chọn):") || "";
-
-        try {
-          const response = await fetch(`${API_BASE}/admin/channels`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              channelName: channelName,
-              description: description,
-              channelType: "public",
-            }),
-          });
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          alert(`✅ ${data.message}`);
-          loadChannels();
-        } catch (error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        }
-      }
+      // Removed old addChannel prompt function as it is now handled by saveChannel() through the modal.
 
       function logout() {
         if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
@@ -1262,52 +1337,89 @@
       }
     </script>
 
-    <!-- User Detail Modal -->
-    <div id="userDetailModal" class="modal">
+    <!-- User Form Modal -->
+    <div id="userFormModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>👤 Chi Tiết User</h2>
-          <button class="modal-close" onclick="closeUserDetailModal()">
-            ✕
-          </button>
+          <h2 id="userFormTitle">✏️ Sửa Thông Tin User</h2>
+          <button class="modal-close" onclick="closeUserModal()">✕</button>
         </div>
         <div class="modal-body">
-          <div class="detail-row">
-            <div class="detail-label">Username:</div>
-            <div class="detail-value" id="modalUsername">--</div>
+          <div class="form-group">
+            <label>📧 Email</label>
+            <input type="email" id="editUserEmail" placeholder="email@example.com" />
           </div>
-          <div class="detail-row">
-            <div class="detail-label">Email:</div>
-            <div class="detail-value" id="detailsEmail">--</div>
+          <div class="form-group">
+            <label>👤 Họ và Tên</label>
+            <input type="text" id="editUserFullName" placeholder="Nguyễn Văn A" />
           </div>
-          <div class="detail-row">
-            <div class="detail-label">Họ & Tên:</div>
-            <div class="detail-value" id="detailsFullName">--</div>
+          <div class="form-group">
+            <label>🛡️ Vai Trò</label>
+            <select id="editUserRole">
+              <option value="user">User (Người dùng)</option>
+              <option value="moderator">Moderator (Kiểm duyệt)</option>
+              <option value="admin">Admin (Quản trị)</option>
+            </select>
           </div>
-          <div class="detail-row">
-            <div class="detail-label">Vai Trò:</div>
-            <div class="detail-value" id="detailsRole">--</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Trạng Thái:</div>
-            <div id="detailsStatus">--</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Tham Gia:</div>
-            <div class="detail-value" id="detailsCreated">--</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Lần Đăng Nhập:</div>
-            <div class="detail-value" id="detailsLastLogin">--</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Avatar:</div>
-            <div class="detail-value" id="detailsAvatar">--</div>
+          <div class="form-group">
+            <label>🚥 Trạng Thái</label>
+            <select id="editUserStatus">
+              <option value="active">Hoạt động (Active)</option>
+              <option value="inactive">Không hoạt động (Inactive)</option>
+              <option value="banned">Bị khóa (Banned)</option>
+            </select>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" onclick="closeUserDetailModal()">
-            Đóng
+          <button class="btn" onclick="closeUserModal()">Hủy</button>
+          <button class="btn btn-primary" onclick="saveUser()">💾 Cập Nhật</button>
+        </div>
+      </div>
+    </div>
+    <!-- Channel Form Modal -->
+    <div id="channelFormModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="channelModalTitle">➕ Channel Mới</h2>
+          <button class="modal-close" onclick="closeChannelModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>🏷️ Tên Channel</label>
+            <input
+              type="text"
+              id="channelNameInput"
+              placeholder="Ví dụ: general, dev-team..."
+            />
+          </div>
+          <div class="form-group">
+            <label>📝 Mô Tả</label>
+            <textarea
+              id="channelDescInput"
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #bdc3c7;
+                border-radius: 5px;
+                font-family: inherit;
+                min-height: 80px;
+              "
+              placeholder="Mô tả mục đích của channel này..."
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label>🔒 Loại Channel</label>
+            <select id="channelTypeInput">
+              <option value="public">Công khai (Public)</option>
+              <option value="private">Riêng tư (Private)</option>
+              <option value="group">Nhóm (Group)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeChannelModal()">Hủy</button>
+          <button class="btn btn-success" onclick="saveChannel()">
+            💾 Lưu Lại
           </button>
         </div>
       </div>

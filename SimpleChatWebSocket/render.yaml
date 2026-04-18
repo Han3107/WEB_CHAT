@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: simplechat
+    runtime: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/SimpleChatWebSocket.war --spring.profiles.active=render
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
