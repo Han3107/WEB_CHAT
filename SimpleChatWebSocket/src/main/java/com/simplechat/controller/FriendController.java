@@ -150,6 +150,46 @@ public class FriendController extends BaseController {
         }
     }
 
+    // ── Lời mời đã gửi đi (pending) ───────────────────────────────
+    @GetMapping("/sent")
+    public ResponseEntity<?> getSentPending() {
+        try {
+            User me = currentDbUser();
+            List<Friendship> sent = friendshipRepository.findPendingSent(me.getUserId());
+            List<Map<String, Object>> list = sent.stream().map(f -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("friendshipId", f.getFriendshipId());
+                m.put("username", f.getReceiver().getUsername());
+                m.put("fullName", f.getReceiver().getFullName() != null ? f.getReceiver().getFullName() : "");
+                m.put("sentAt", f.getCreatedAt());
+                return m;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(Map.of("sent", list, "count", list.size()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    // ── Hủy lời mời đã gửi ─────────────────────────────────────────
+    @DeleteMapping("/request/{username}")
+    public ResponseEntity<?> cancelRequest(@PathVariable String username) {
+        try {
+            User me = currentDbUser();
+            User target = userRepository.findByUsername(username).orElse(null);
+            if (target == null) return ResponseEntity.status(404).body(Map.of("error", true, "message", "Không tìm thấy user"));
+
+            Friendship f = friendshipRepository.findBetween(me.getUserId(), target.getUserId()).orElse(null);
+            if (f == null || !"pending".equals(f.getStatus()) || !f.getRequester().getUserId().equals(me.getUserId())) {
+                return ResponseEntity.status(404).body(Map.of("error", true, "message", "Không tìm thấy lời mời đã gửi"));
+            }
+
+            friendshipRepository.delete(f);
+            return ResponseEntity.ok(Map.of("message", "Đã hủy lời mời kết bạn đến " + username));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
     // ── Xóa bạn bè ─────────────────────────────────────────────────
     @DeleteMapping("/{username}")
     public ResponseEntity<?> removeFriend(@PathVariable String username) {

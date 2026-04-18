@@ -893,16 +893,26 @@
       // ── Load conversations ───────────────────────────────────────
       async function loadConversations() {
         try {
-          const [chanRes, friendRes, allUsersRes] = await Promise.all([
+          const [chanRes, friendRes, allUsersRes, sentRes, pendingRes] = await Promise.all([
             fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }}),
             fetch("/SimpleChatWebSocket/api/friends", { headers: { Authorization: "Bearer " + token }}),
-            fetch("/SimpleChatWebSocket/api/users", { headers: { Authorization: "Bearer " + token }})
+            fetch("/SimpleChatWebSocket/api/users", { headers: { Authorization: "Bearer " + token }}),
+            fetch("/SimpleChatWebSocket/api/friends/sent", { headers: { Authorization: "Bearer " + token }}),
+            fetch("/SimpleChatWebSocket/api/friends/pending", { headers: { Authorization: "Bearer " + token }})
           ]);
           const chanData = await chanRes.json();
           const friendDataObj = await friendRes.json();
           const allUsersData = await allUsersRes.json();
+          pendingSentData = (await sentRes.json()).sent || [];
+          const pendingReceivedData = (await pendingRes.json()).pending || [];
           friendsData = friendDataObj.friends || [];
-          renderConversations(chanData.channels || [], friendsData, allUsersData.users || []);
+          
+          // Update navigation badge
+          const badge = document.getElementById('pendingFriendCount');
+          if (pendingReceivedData.length > 0) { badge.style.display = 'flex'; badge.innerText = pendingReceivedData.length; }
+          else { badge.style.display = 'none'; }
+
+          renderConversations(chanData.channels || [], friendsData, allUsersData.users || [], pendingReceivedData);
         } catch (err) { console.error("Load fail:", err); }
       }
 
@@ -929,7 +939,7 @@
         icon.classList.toggle('collapsed', body.classList.toggle('collapsed'));
       }
 
-      function renderConversations(channels, friends, allUsers) {
+      function renderConversations(channels, friends, allUsers, pendingReceived) {
         // Channels
         const chList = document.getElementById("channelsList");
         chList.innerHTML = channels.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có nhóm nào</div>';
@@ -944,10 +954,34 @@
           chList.appendChild(item);
         });
 
-        // Users (friends only, exclude admin + self)
+        // Users (friends + pending received)
         const uList = document.getElementById("usersList");
+        uList.innerHTML = "";
+        
+        // Pending received
+        if (pendingReceived && pendingReceived.length > 0) {
+          pendingReceived.forEach(req => {
+            const item = document.createElement("div");
+            item.className = "chat-item";
+            item.style.padding = "10px 24px";
+            item.style.background = "var(--primary-light)";
+            item.innerHTML = `
+              ${getUserAvatar(req.username, 40)}
+              <div class="item-info"><div class="item-top" style="margin-bottom:0"><span class="item-name" style="font-size:14px">${req.username}</span></div><div class="item-msg" style="font-size:12px">Yêu cầu kết bạn</div></div>
+              <div style="display:flex;gap:4px">
+                <button class="btn-approve" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation();respondFriend(${req.friendshipId},'accept')">Chấp nhận</button>
+                <button class="btn-reject" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation();respondFriend(${req.friendshipId},'reject')">Xóa</button>
+              </div>
+            `;
+            uList.appendChild(item);
+          });
+        }
+
         const others = friends.filter(f => f.username !== username);
-        uList.innerHTML = others.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có bạn bè — tìm kiếm để kết bạn</div>';
+        if (others.length === 0 && (!pendingReceived || pendingReceived.length === 0)) {
+           uList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có bạn bè — tìm kiếm để kết bạn</div>';
+        }
+
         others.forEach(friend => {
           const item = document.createElement("div");
           item.className = "chat-item";
@@ -965,13 +999,18 @@
         const recs = allUsers.filter(u => !friendUsernames.has(u.username));
         recList.innerHTML = recs.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Không có đề xuất nào</div>';
         recs.slice(0, 10).forEach(u => {
+          const isPending = pendingSentData.some(p => p.username === u.username);
+          let actionBtn = isPending
+            ? `<button class="friend-action-btn" style="background:#fee2e2;color:#ef4444" onclick="event.stopPropagation();cancelFriendRequest('${u.username}',this)">Hủy</button>`
+            : `<button class="friend-action-btn btn-add-friend" onclick="event.stopPropagation();sendFriendRequest('${u.username}',this)">➕ Kết bạn</button>`;
+
           const item = document.createElement("div");
           item.className = "chat-item";
           item.style.padding = "10px 24px";
           item.innerHTML = `
             ${getUserAvatar(u.username, 40)}
             <div class="item-info"><div class="item-top" style="margin-bottom:0"><span class="item-name" style="font-size:14px">${u.username}</span></div><div class="item-msg" style="font-size:12px">${u.fullName||''}</div></div>
-            <button class="friend-action-btn btn-add-friend" onclick="event.stopPropagation();sendFriendRequest('${u.username}',this)">➕ Kết bạn</button>
+            ${actionBtn}
           `;
           recList.appendChild(item);
         });
@@ -1069,7 +1108,12 @@
             
             let actionBtn = '';
             if (m.username !== username && m.username !== 'admin' && !friendUsernames.has(m.username)) {
-              actionBtn = `<button class="friend-action-btn btn-add-friend" style="padding: 4px 8px; font-size: 10px;" onclick="event.stopPropagation();sendFriendRequest('${m.username}',this)">➕ Kết bạn</button>`;
+              const isPending = pendingSentData.some(p => p.username === m.username);
+              if (isPending) {
+                actionBtn = `<button class="friend-action-btn" style="padding: 4px 8px; font-size: 10px; background:#fee2e2; color:#ef4444;" onclick="event.stopPropagation();cancelFriendRequest('${m.username}',this)">Hủy</button>`;
+              } else {
+                actionBtn = `<button class="friend-action-btn btn-add-friend" style="padding: 4px 8px; font-size: 10px;" onclick="event.stopPropagation();sendFriendRequest('${m.username}',this)">➕ Kết bạn</button>`;
+              }
             }
 
             return `<div class="member-item">
@@ -1291,9 +1335,30 @@
           });
           const data = await res.json();
           if (res.ok) {
-            btn.className = 'friend-action-btn btn-pending';
-            btn.innerText = '⏳ Chờ xác nhận';
-            btn.onclick = null;
+            btn.className = 'friend-action-btn';
+            btn.style.background = '#fee2e2';
+            btn.style.color = '#ef4444';
+            btn.innerText = 'Hủy';
+            btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(username, btn); };
+            loadConversations(); // refresh state
+          }
+          alert(data.message);
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      async function cancelFriendRequest(username, btn) {
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/friends/request/${username}`, {
+            method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            btn.className = 'friend-action-btn btn-add-friend';
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.innerText = '➕ Kết bạn';
+            btn.onclick = (e) => { e.stopPropagation(); sendFriendRequest(username, btn); };
+            loadConversations(); // refresh state
           }
           alert(data.message);
         } catch(e) { alert('Lỗi: ' + e.message); }
