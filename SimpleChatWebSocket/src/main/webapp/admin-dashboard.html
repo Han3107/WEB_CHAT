@@ -1,1428 +1,743 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard - Simple Chat</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: #ecf0f1;
-        color: #333;
-      }
-
-      .container {
-        display: flex;
-        min-height: 100vh;
-      }
-
-      .sidebar {
-        width: 260px;
-        background: #2c3e50;
-        color: white;
-        padding: 20px 0;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-        position: fixed;
-        height: 100vh;
-        overflow-y: auto;
-      }
-
-      .sidebar h2 {
-        padding: 0 20px 15px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #667eea;
-        font-size: 18px;
-      }
-
-      .user-badge {
-        background: rgba(102, 126, 234, 0.2);
-        padding: 12px 15px;
-        margin: 0 10px 20px;
-        border-radius: 8px;
-        border-left: 3px solid #667eea;
-      }
-
-      .user-badge .username {
-        font-weight: bold;
-        color: #667eea;
-        margin-bottom: 5px;
-      }
-
-      .user-badge .role {
-        background: #667eea;
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 3px;
-        font-size: 11px;
-        font-weight: bold;
-      }
-
-      .nav-menu {
-        list-style: none;
-      }
-
-      .nav-menu li {
-        padding: 0;
-        margin: 5px 10px;
-      }
-
-      .nav-menu a {
-        display: block;
-        color: white;
-        text-decoration: none;
-        padding: 10px 15px;
-        border-radius: 5px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .nav-menu a:hover,
-      .nav-menu a.active {
-        background: #667eea;
-        padding-left: 20px;
-      }
-
-      .nav-menu a.active::before {
-        content: "→";
-        font-weight: bold;
-      }
-
-      .logout-btn {
-        position: absolute;
-        bottom: 20px;
-        left: 10px;
-        right: 10px;
-        padding: 12px;
-        background: #e74c3c;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s ease;
-      }
-
-      .logout-btn:hover {
-        background: #c0392b;
-        transform: translateY(-2px);
-      }
-
-      .main {
-        margin-left: 260px;
-        flex: 1;
-        padding: 30px;
-        overflow-y: auto;
-      }
-
-      .header {
-        background: white;
-        padding: 20px 30px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .header h1 {
-        font-size: 28px;
-        color: #2c3e50;
-      }
-
-      .header-info {
-        text-align: right;
-        font-size: 13px;
-        color: #7f8c8d;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-      }
-
-      .stat-card {
-        background: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #667eea;
-      }
-
-      .stat-card.green {
-        border-left-color: #2ecc71;
-      }
-
-      .stat-card.blue {
-        border-left-color: #3498db;
-      }
-
-      .stat-card.orange {
-        border-left-color: #f39c12;
-      }
-
-      .stat-card.red {
-        border-left-color: #e74c3c;
-      }
-
-      .stat-label {
-        font-size: 12px;
-        color: #7f8c8d;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-      }
-
-      .stat-value {
-        font-size: 32px;
-        font-weight: bold;
-        color: #2c3e50;
-        margin-bottom: 10px;
-      }
-
-      .stat-footer {
-        font-size: 12px;
-        color: #95a5a6;
-        padding-top: 10px;
-        border-top: 1px solid #ecf0f1;
-      }
-
-      .content-section {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        display: none;
-      }
-
-      .content-section.active {
-        display: block;
-      }
-
-      .section-title {
-        font-size: 22px;
-        color: #2c3e50;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #667eea;
-        padding-bottom: 10px;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-      }
-
-      table thead {
-        background: #f8f9fa;
-      }
-
-      table th {
-        padding: 15px;
-        text-align: left;
-        font-weight: 600;
-        color: #2c3e50;
-        border-bottom: 2px solid #ecf0f1;
-      }
-
-      table td {
-        padding: 15px;
-        border-bottom: 1px solid #ecf0f1;
-      }
-
-      table tr:hover {
-        background: #f8f9fa;
-      }
-
-      .badge {
-        display: inline-block;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      .badge-active {
-        background: #d4edda;
-        color: #155724;
-      }
-
-      .badge-banned {
-        background: #f8d7da;
-        color: #721c24;
-      }
-
-      .badge-admin {
-        background: #cce5ff;
-        color: #004085;
-      }
-
-      .badge-user {
-        background: #d1ecf1;
-        color: #0c5460;
-      }
-
-      .badge-mod {
-        background: #fff3cd;
-        color: #856404;
-      }
-
-      .btn {
-        padding: 8px 15px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        margin-right: 5px;
-      }
-
-      .btn-primary {
-        background: #667eea;
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: #5a67d8;
-      }
-
-      .btn-danger {
-        background: #e74c3c;
-        color: white;
-      }
-
-      .btn-danger:hover {
-        background: #c0392b;
-      }
-
-      .btn-success {
-        background: #27ae60;
-        color: white;
-      }
-
-      .btn-success:hover {
-        background: #229954;
-      }
-
-      .search-box {
-        margin-bottom: 20px;
-      }
-
-      .search-box input {
-        padding: 10px 15px;
-        border: 1px solid #bdc3c7;
-        border-radius: 5px;
-        width: 300px;
-        font-size: 14px;
-      }
-
-      .form-group {
-        margin-bottom: 15px;
-      }
-
-      .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .form-group input,
-      .form-group select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #bdc3c7;
-        border-radius: 5px;
-        font-size: 14px;
-      }
-
-      @media (max-width: 1024px) {
-        .sidebar {
-          width: 200px;
-        }
-
-        .main {
-          margin-left: 200px;
-          padding: 20px;
-        }
-
-        .dashboard-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-
-      @media (max-width: 768px) {
-        .sidebar {
-          position: fixed;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: auto;
-          z-index: 1000;
-          display: none;
-        }
-
-        .sidebar.active {
-          display: block;
-        }
-
-        .main {
-          margin-left: 0;
-        }
-
-        .dashboard-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      /* User Detail Modal */
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 2000;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .modal.active {
-        display: flex;
-      }
-
-      .modal-content {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        max-width: 500px;
-        width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #ecf0f1;
-        padding-bottom: 15px;
-      }
-
-      .modal-header h2 {
-        color: #2c3e50;
-        font-size: 24px;
-        margin: 0;
-      }
-
-      .modal-close {
-        background: #e74c3c;
-        color: white;
-        border: none;
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-      }
-
-      .modal-close:hover {
-        background: #c0392b;
-        transform: rotate(90deg);
-      }
-
-      .modal-body {
-        display: grid;
-        gap: 15px;
-      }
-
-      .detail-row {
-        display: grid;
-        grid-template-columns: 150px 1fr;
-        gap: 15px;
-        padding: 12px;
-        border-radius: 5px;
-        background: #f8f9fa;
-        align-items: start;
-      }
-
-      .detail-label {
-        font-weight: 600;
-        color: #667eea;
-        font-size: 14px;
-      }
-
-      .detail-value {
-        color: #333;
-        word-break: break-word;
-        font-size: 14px;
-      }
-
-      .detail-value.status-active {
-        color: #27ae60;
-        font-weight: 600;
-      }
-
-      .detail-value.status-banned {
-        color: #e74c3c;
-        font-weight: 600;
-      }
-
-      .modal-footer {
-        margin-top: 25px;
-        padding-top: 15px;
-        border-top: 1px solid #ecf0f1;
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <h2>📊 Admin Hub</h2>
-
-        <div class="user-badge">
-          <div class="username" id="adminUsername">Admin</div>
-          <span class="role">Quản Trị</span>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #6c63ff;
+      --primary-light: #ede9fe;
+      --primary-dark: #5a52d5;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --sidebar-bg: #1e1b4b;
+      --sidebar-text: #c4b5fd;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-dim: #64748b;
+      --border: #e2e8f0;
+      --radius: 16px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width:240px; background:var(--sidebar-bg); color:white;
+      display:flex; flex-direction:column; padding:24px 0;
+      position:fixed; height:100vh; overflow-y:auto; z-index:100;
+    }
+    .sidebar-logo {
+      display:flex; align-items:center; gap:10px;
+      padding:0 20px 24px; border-bottom:1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo .logo-icon {
+      width:38px; height:38px; background:var(--primary);
+      border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+    }
+    .sidebar-logo span { font-size:16px; font-weight:700; color:white; }
+    .sidebar-user {
+      margin:16px 12px; padding:12px; background:rgba(255,255,255,0.06);
+      border-radius:12px; display:flex; align-items:center; gap:10px;
+    }
+    .sidebar-user .avatar {
+      width:36px; height:36px; border-radius:10px; background:var(--primary);
+      display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px;
+    }
+    .sidebar-user .info .name { font-size:13px; font-weight:600; color:white; }
+    .sidebar-user .info .role { font-size:11px; color:var(--sidebar-text); }
+    .nav-section { padding:16px 12px 4px; font-size:10px; font-weight:700; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:.1em; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 20px; margin:2px 8px; border-radius:10px;
+      color:var(--sidebar-text); cursor:pointer; transition:.2s; font-size:14px; font-weight:500;
+      text-decoration:none;
+    }
+    .nav-item:hover { background:rgba(255,255,255,0.08); color:white; }
+    .nav-item.active { background:var(--primary); color:white; }
+    .nav-item i { width:18px; text-align:center; }
+    .sidebar-footer { margin-top:auto; padding:16px 8px 0; border-top:1px solid rgba(255,255,255,0.08); }
+
+    /* ── Main ── */
+    .main { margin-left:240px; flex:1; padding:28px; overflow-y:auto; }
+    .topbar {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:28px;
+    }
+    .topbar h1 { font-size:22px; font-weight:700; }
+    .topbar .topbar-right { display:flex; align-items:center; gap:16px; }
+    .topbar-time { font-size:13px; color:var(--text-dim); }
+    .btn-chat {
+      padding:8px 18px; background:var(--primary); color:white;
+      border:none; border-radius:10px; font-size:13px; font-weight:600;
+      cursor:pointer; display:flex; align-items:center; gap:6px;
+    }
+    .btn-chat:hover { background:var(--primary-dark); }
+
+    /* ── Stat cards ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+    .stat-card {
+      background:var(--card); border-radius:var(--radius); padding:20px;
+      box-shadow:var(--shadow); display:flex; align-items:center; gap:16px;
+    }
+    .stat-icon {
+      width:52px; height:52px; border-radius:14px;
+      display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;
+    }
+    .stat-icon.purple { background:#ede9fe; color:var(--primary); }
+    .stat-icon.cyan   { background:#cffafe; color:var(--accent); }
+    .stat-icon.green  { background:#d1fae5; color:var(--success); }
+    .stat-icon.orange { background:#fef3c7; color:var(--warning); }
+    .stat-icon.red    { background:#fee2e2; color:var(--danger); }
+    .stat-icon.blue   { background:#dbeafe; color:#3b82f6; }
+    .stat-info .label { font-size:12px; color:var(--text-dim); font-weight:500; margin-bottom:4px; }
+    .stat-info .value { font-size:26px; font-weight:700; color:var(--text); line-height:1; }
+    .stat-info .sub   { font-size:11px; color:var(--text-dim); margin-top:4px; }
+
+    /* ── Two-col layout ── */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+    .card { background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+    .card-title { font-size:15px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .card-title span { font-size:12px; color:var(--text-dim); font-weight:400; margin-left:auto; cursor:pointer; }
+
+    /* Online list */
+    .online-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .online-item:last-child { border-bottom:none; }
+    .online-avatar {
+      width:34px; height:34px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:13px; color:white; flex-shrink:0;
+    }
+    .online-dot { width:8px; height:8px; border-radius:50%; background:var(--success); margin-left:auto; flex-shrink:0; }
+
+    /* Recent channels */
+    .channel-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .channel-item:last-child { border-bottom:none; }
+    .channel-icon {
+      width:34px; height:34px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+    }
+    .channel-info .ch-name { font-size:13px; font-weight:600; }
+    .channel-info .ch-sub  { font-size:11px; color:var(--text-dim); }
+    .ch-badge { margin-left:auto; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:600; }
+
+    /* ── Content sections ── */
+    .section { display:none; }
+    .section.active { display:block; }
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .section-header h2 { font-size:18px; font-weight:700; }
+
+    /* Table */
+    .table-card { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    thead { background:#f8fafc; }
+    th { padding:14px 16px; text-align:left; font-size:12px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--border); }
+    td { padding:14px 16px; font-size:13px; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#f8fafc; }
+
+    /* Badges */
+    .badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-active   { background:#d1fae5; color:#065f46; }
+    .badge-banned   { background:#fee2e2; color:#991b1b; }
+    .badge-admin    { background:#ede9fe; color:#5b21b6; }
+    .badge-mod      { background:#fef3c7; color:#92400e; }
+    .badge-user     { background:#dbeafe; color:#1e40af; }
+    .badge-public   { background:#d1fae5; color:#065f46; }
+    .badge-private  { background:#ede9fe; color:#5b21b6; }
+    .badge-group    { background:#dbeafe; color:#1e40af; }
+
+    /* Buttons */
+    .btn { padding:6px 14px; border:none; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:.15s; }
+    .btn-primary { background:var(--primary); color:white; }
+    .btn-primary:hover { background:var(--primary-dark); }
+    .btn-danger  { background:#fee2e2; color:var(--danger); }
+    .btn-danger:hover  { background:var(--danger); color:white; }
+    .btn-success { background:#d1fae5; color:var(--success); }
+    .btn-success:hover { background:var(--success); color:white; }
+    .btn-lg { padding:10px 20px; font-size:13px; border-radius:10px; }
+
+    /* Search */
+    .search-input {
+      padding:9px 14px 9px 36px; border:1px solid var(--border); border-radius:10px;
+      font-size:13px; outline:none; width:260px; background:#f8fafc;
+    }
+    .search-input:focus { border-color:var(--primary); background:white; }
+    .search-wrap { position:relative; }
+    .search-wrap i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:13px; }
+
+    /* Modal */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:500; align-items:center; justify-content:center; }
+    .modal.active { display:flex; }
+    .modal-box { background:white; border-radius:20px; padding:28px; width:460px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
+    .modal-box h3 { font-size:17px; font-weight:700; margin-bottom:20px; }
+    .form-group { margin-bottom:14px; }
+    .form-group label { font-size:12px; font-weight:600; color:var(--text-dim); display:block; margin-bottom:6px; }
+    .form-group input, .form-group select {
+      width:100%; padding:10px 12px; border:1px solid var(--border);
+      border-radius:10px; font-size:13px; outline:none; font-family:inherit;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:var(--primary); }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+    /* Pending requests */
+    .req-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .req-item:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💬</div>
+    <span>SimpleChat</span>
+  </div>
+  <div class="sidebar-user">
+    <div class="avatar" id="sidebarAvatar">A</div>
+    <div class="info">
+      <div class="name" id="sidebarName">Admin</div>
+      <div class="role">Quản trị viên</div>
+    </div>
+  </div>
+
+  <div class="nav-section">Menu</div>
+  <a class="nav-item active" data-section="dashboard"><i class="fas fa-th-large"></i> Dashboard</a>
+  <a class="nav-item" data-section="users"><i class="fas fa-users"></i> Người dùng</a>
+  <a class="nav-item" data-section="channels"><i class="fas fa-comments"></i> Nhóm / Kênh</a>
+  <a class="nav-item" data-section="logs"><i class="fas fa-list-alt"></i> Activity Logs</a>
+  <a class="nav-item" data-section="analytics"><i class="fas fa-chart-bar"></i> Thống kê</a>
+  <a class="nav-item" data-section="settings"><i class="fas fa-cog"></i> Cài đặt</a>
+
+  <div class="sidebar-footer">
+    <a class="nav-item" onclick="logout()" style="color:#f87171;cursor:pointer"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Dashboard</h1>
+    <div class="topbar-right">
+      <span class="topbar-time" id="currentTime"></span>
+      <button class="btn-chat" onclick="window.location.href='chat.html'"><i class="fas fa-comment-alt"></i> Mở Chat</button>
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div id="dashboard" class="section active">
+    <!-- Stats row 1 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+          <div class="label">Tổng người dùng</div>
+          <div class="value" id="statTotalUsers">--</div>
+          <div class="sub" id="statUsersub">Đang tải...</div>
         </div>
-
-        <ul class="nav-menu">
-          <li>
-            <a href="#" class="nav-link active" data-section="dashboard"
-              >Dashboard</a
-            >
-          </li>
-          <li>
-            <a href="#" class="nav-link" data-section="users"
-              >👥 Quản Lý Users</a
-            >
-          </li>
-          <li>
-            <a href="#" class="nav-link" data-section="channels"
-              >💬 Quản Lý Channels</a
-            >
-          </li>
-          <li>
-            <a href="#" class="nav-link" data-section="logs"
-              >📋 Activity Logs</a
-            >
-          </li>
-          <li>
-            <a href="#" class="nav-link" data-section="analytics"
-              >📈 Thống Kê</a
-            >
-          </li>
-          <li>
-            <a href="#" class="nav-link" data-section="settings">⚙️ Cài Đặt</a>
-          </li>
-        </ul>
-
-        <button class="logout-btn" onclick="logout()">🚪 Đăng Xuất</button>
       </div>
-
-      <!-- Main Content -->
-      <div class="main">
-        <div class="header">
-          <h1>📱 Simple Chat - Quản Lý</h1>
-          <div class="header-info">
-            <div id="currentTime"></div>
-            <div>Xin chào, <strong id="headerUsername">Admin</strong></div>
-          </div>
+      <div class="stat-card">
+        <div class="stat-icon cyan"><i class="fas fa-circle" style="font-size:14px"></i></div>
+        <div class="stat-info">
+          <div class="label">Đang online</div>
+          <div class="value" id="statOnline">--</div>
+          <div class="sub">Kết nối WebSocket</div>
         </div>
-
-        <!-- Dashboard Section -->
-        <div id="dashboard" class="content-section active">
-          <h2 class="section-title">🏠 Dashboard</h2>
-
-          <div class="dashboard-grid">
-            <div class="stat-card blue">
-              <div class="stat-label">Tổng Số Users</div>
-              <div class="stat-value" id="totalUsers">--</div>
-              <div class="stat-footer" id="usersFooter">Đang tải...</div>
-            </div>
-
-            <div class="stat-card green">
-              <div class="stat-label">Tổng Số Channels</div>
-              <div class="stat-value" id="totalChannels">--</div>
-              <div class="stat-footer" id="channelsFooter">Đang tải...</div>
-            </div>
-
-            <div class="stat-card orange">
-              <div class="stat-label">Tổng Số Tin Nhắn</div>
-              <div class="stat-value" id="totalMessages">--</div>
-              <div class="stat-footer" id="messagesFooter">Đang tải...</div>
-            </div>
-
-            <div class="stat-card red">
-              <div class="stat-label">Users Bị Ban</div>
-              <div class="stat-value" id="bannedUsers">--</div>
-              <div class="stat-footer" id="bannedFooter">Cần xem xét</div>
-            </div>
-          </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-comments"></i></div>
+        <div class="stat-info">
+          <div class="label">Tổng nhóm</div>
+          <div class="value" id="statChannels">--</div>
+          <div class="sub" id="statChannelSub">Đang tải...</div>
         </div>
-
-        <!-- Users Management -->
-        <div id="users" class="content-section">
-          <h2 class="section-title">👥 Quản Lý Users</h2>
-
-          <div class="search-box">
-            <input
-              type="text"
-              placeholder="🔍 Tìm kiếm user..."
-              id="userSearch"
-              onkeyup="filterTable('usersTable')"
-            />
-          </div>
-
-          <table id="usersTable">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Vai Trò</th>
-                <th>Trạng Thái</th>
-                <th>Tham Gia</th>
-                <th>Hành Động</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody">
-              <tr>
-                <td colspan="6" style="text-align: center; padding: 20px">
-                  ⏳ Đang tải dữ liệu...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange"><i class="fas fa-envelope"></i></div>
+        <div class="stat-info">
+          <div class="label">Tổng tin nhắn</div>
+          <div class="value" id="statMessages">--</div>
+          <div class="sub">Tất cả kênh</div>
         </div>
-
-        <!-- Channels Management -->
-        <div id="channels" class="content-section">
-          <h2 class="section-title">💬 Quản Lý Channels</h2>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div class="search-box" style="margin-bottom: 0;">
-              <input type="text" placeholder="🔍 Tìm kiếm channel..." onkeyup="filterTable('channelsTable')" />
-            </div>
-            <button class="btn btn-success" onclick="openChannelModal()" style="padding: 10px 20px;">
-              ➕ Tạo Channel Mới
-            </button>
-          </div>
-
-          <table id="channelsTable">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Tên Channel</th>
-                <th>Mô Tả</th>
-                <th>Thành Viên</th>
-                <th>Tin Nhắn</th>
-                <th>Hành Động</th>
-              </tr>
-            </thead>
-            <tbody id="channelsTableBody">
-              <tr>
-                <td colspan="6" style="text-align: center; padding: 20px">
-                  ⏳ Đang tải dữ liệu...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      </div>
+    </div>
+    <!-- Stats row 2 -->
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-icon red"><i class="fas fa-user-shield"></i></div>
+        <div class="stat-info">
+          <div class="label">Admin</div>
+          <div class="value" id="statAdmins">--</div>
+          <div class="sub">Quản trị viên</div>
         </div>
-
-        <!-- Activity Logs -->
-        <div id="logs" class="content-section">
-          <h2 class="section-title">📋 Activity Logs</h2>
-
-          <table id="logsTable">
-            <thead>
-              <tr>
-                <th>Thời Gian</th>
-                <th>User</th>
-                <th>Hành Động</th>
-                <th>Chi Tiết</th>
-                <th>IP Address</th>
-              </tr>
-            </thead>
-            <tbody id="logsTableBody">
-              <tr>
-                <td colspan="5" style="text-align: center; padding: 20px">
-                  ⏳ Đang tải dữ liệu...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-user-clock"></i></div>
+        <div class="stat-info">
+          <div class="label">Yêu cầu chờ</div>
+          <div class="value" id="statPending">--</div>
+          <div class="sub">Chờ duyệt thành viên</div>
         </div>
-
-        <!-- Analytics -->
-        <div id="analytics" class="content-section">
-          <h2 class="section-title">📈 Thống Kê Hệ Thống</h2>
-
-          <div class="dashboard-grid">
-            <div class="stat-card">
-              <div class="stat-label">Tổng số Vote</div>
-              <div class="stat-value" id="totalVisits">--</div>
-              <div class="stat-footer">Tất cả</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">Active Users</div>
-              <div class="stat-value" id="activeUsers">--</div>
-              <div class="stat-footer">Đang hoạt động</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">Tổng số Quiz</div>
-              <div class="stat-value" id="messagesPerHour">--</div>
-              <div class="stat-footer">Tất cả</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">Server Uptime</div>
-              <div class="stat-value" id="serverUptime">99.9%</div>
-              <div class="stat-footer">Tuần này</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Settings -->
-        <div id="settings" class="content-section">
-          <h2 class="section-title">⚙️ Cài Đặt Hệ Thống</h2>
-
-          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px">
-            <div class="form-group">
-              <label>📛 Tên Ứng Dụng</label>
-              <input type="text" value="Simple Chat System" />
-            </div>
-
-            <div class="form-group">
-              <label>🔐 Max Login Attempts</label>
-              <input type="number" value="5" />
-            </div>
-
-            <div class="form-group">
-              <label>⏱️ Session Timeout (minutes)</label>
-              <input type="number" value="30" />
-            </div>
-
-            <div class="form-group">
-              <label>🌍 Maintenance Mode</label>
-              <input type="checkbox" /> Kích hoạt chế độ bảo trì
-            </div>
-
-            <button class="btn btn-primary">💾 Lưu Cài Đặt</button>
-          </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange"><i class="fas fa-ban"></i></div>
+        <div class="stat-info">
+          <div class="label">Bị cấm</div>
+          <div class="value" id="statBanned">--</div>
+          <div class="sub">Tài khoản bị ban</div>
         </div>
       </div>
     </div>
 
-    <script>
-      const username = localStorage.getItem("username") || "Admin";
-      const role = localStorage.getItem("role") || "admin";
-      const token = localStorage.getItem("token") || null;
-      const contextPath = window.location.pathname
-        .split("/")
-        .slice(0, -1)
-        .join("/");
-      const API_BASE = `${window.location.origin}${contextPath}/api`;
+    <!-- Online users + Recent channels -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-circle" style="color:var(--success);font-size:10px"></i> Người dùng online <span onclick="loadOnlineUsers()">↻ Làm mới</span></div>
+        <div id="onlineList"><div style="color:var(--text-dim);font-size:13px;padding:8px 0">Đang tải...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-comments" style="color:var(--primary)"></i> Nhóm gần đây <span onclick="loadRecentChannels()">↻ Làm mới</span></div>
+        <div id="recentChannelsList"><div style="color:var(--text-dim);font-size:13px;padding:8px 0">Đang tải...</div></div>
+      </div>
+    </div>
+  </div>
 
-      // Auto-redirect to login if not authenticated
-      if (!token) {
-        window.location.replace("login.html");
-      }
+  <!-- ══ USERS ══ -->
+  <div id="users" class="section">
+    <div class="section-header">
+      <h2>👥 Quản lý người dùng</h2>
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input class="search-input" id="userSearchInput" placeholder="Tìm theo tên, email..." oninput="searchUsers(this.value)">
+      </div>
+    </div>
+    <div class="table-card">
+      <table id="usersTable">
+        <thead><tr><th>Username</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Tham gia</th><th>Hành động</th></tr></thead>
+        <tbody id="usersTableBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">⏳ Đang tải...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-      // Check admin access
-      window.addEventListener("DOMContentLoaded", () => {
-        console.log(
-          "Admin Dashboard loaded. Username:",
-          username,
-          "Role:",
-          role,
-        );
+  <!-- ══ CHANNELS ══ -->
+  <div id="channels" class="section">
+    <div class="section-header">
+      <h2>💬 Quản lý nhóm / kênh</h2>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="search-wrap">
+          <i class="fas fa-search"></i>
+          <input class="search-input" id="channelSearchInput" placeholder="Tìm nhóm..." oninput="searchChannels(this.value)">
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="openChannelModal()"><i class="fas fa-plus"></i> Tạo kênh</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <table id="channelsTable">
+        <thead><tr><th>Tên kênh</th><th>Loại</th><th>Mã mời</th><th>Tự duyệt</th><th>Thành viên</th><th>Hành động</th></tr></thead>
+        <tbody id="channelsTableBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">⏳ Đang tải...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-        document.getElementById("adminUsername").textContent = username;
-        document.getElementById("headerUsername").textContent = username;
+  <!-- ══ LOGS ══ -->
+  <div id="logs" class="section">
+    <div class="section-header"><h2>📋 Activity Logs</h2></div>
+    <div class="table-card">
+      <table id="logsTable">
+        <thead><tr><th>Thời gian</th><th>User</th><th>Hành động</th><th>Chi tiết</th><th>IP</th></tr></thead>
+        <tbody id="logsTableBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-dim)">⏳ Đang tải...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-        updateTime();
-        setInterval(updateTime, 1000);
+  <!-- ══ ANALYTICS ══ -->
+  <div id="analytics" class="section">
+    <div class="section-header"><h2>📈 Thống kê hệ thống</h2></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-poll"></i></div><div class="stat-info"><div class="label">Tổng Vote</div><div class="value" id="statVotes">--</div></div></div>
+      <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-question-circle"></i></div><div class="stat-info"><div class="label">Tổng Quiz</div><div class="value" id="statQuiz">--</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-user-check"></i></div><div class="stat-info"><div class="label">Active Users</div><div class="value" id="statActive">--</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-server"></i></div><div class="stat-info"><div class="label">Server Uptime</div><div class="value">99.9%</div></div></div>
+    </div>
+  </div>
 
-        // Load tất cả dữ liệu
-        loadAnalytics();
-        loadUsers();
-        loadChannels();
-        loadLogs();
+  <!-- ══ SETTINGS ══ -->
+  <div id="settings" class="section">
+    <div class="section-header"><h2>⚙️ Cài đặt hệ thống</h2></div>
+    <div class="card" style="max-width:520px">
+      <div class="form-group"><label>Tên ứng dụng</label><input type="text" value="Simple Chat System"></div>
+      <div class="form-group"><label>Max login attempts</label><input type="number" value="5"></div>
+      <div class="form-group"><label>Session timeout (phút)</label><input type="number" value="30"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px"><input type="checkbox" style="width:auto"><label style="margin:0">Bật chế độ bảo trì</label></div>
+      <button class="btn btn-primary btn-lg">💾 Lưu cài đặt</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit User -->
+<div class="modal" id="userModal">
+  <div class="modal-box">
+    <h3>✏️ Chỉnh sửa người dùng</h3>
+    <input type="hidden" id="editUsername">
+    <div class="form-group"><label>Vai trò</label>
+      <select id="editRole"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select>
+    </div>
+    <div class="form-group"><label>Trạng thái</label>
+      <select id="editStatus"><option value="active">Active</option><option value="inactive">Inactive</option><option value="banned">Banned</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('userModal')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveUser()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create/Edit Channel -->
+<div class="modal" id="channelModal">
+  <div class="modal-box">
+    <h3 id="channelModalTitle">➕ Tạo kênh mới</h3>
+    <input type="hidden" id="editChannelId">
+    <div class="form-group"><label>Tên kênh *</label><input id="editChannelName" placeholder="Tên kênh..."></div>
+    <div class="form-group"><label>Mô tả</label><input id="editChannelDesc" placeholder="Mô tả..."></div>
+    <div class="form-group"><label>Loại</label>
+      <select id="editChannelType"><option value="public">Public</option><option value="group">Group</option><option value="private">Private</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('channelModal')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveChannel()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const username = localStorage.getItem('username') || 'Admin';
+  const token = localStorage.getItem('token');
+  const API = `${window.location.origin}${window.location.pathname.split('/').slice(0,-1).join('/')}/api`;
+
+  if (!token) window.location.replace('login.html');
+
+  const USER_COLORS = ['#6c63ff','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+  function uc(n){ let h=0; for(let c of n) h=c.charCodeAt(0)+((h<<5)-h); return USER_COLORS[Math.abs(h)%USER_COLORS.length]; }
+  function ini(n){ return n?n[0].toUpperCase():'?'; }
+
+  const CHANNEL_COLORS = { public:'#10b981', group:'#6c63ff', private:'#f59e0b' };
+  const CHANNEL_ICONS  = { public:'#', group:'👥', private:'🔒' };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('sidebarName').textContent = username;
+    document.getElementById('sidebarAvatar').textContent = ini(username);
+    document.getElementById('sidebarAvatar').style.background = uc(username);
+    updateTime(); setInterval(updateTime, 1000);
+    loadDashboard();
+    loadUsers();
+    loadChannels();
+    loadLogs();
+
+    // Nav
+    document.querySelectorAll('.nav-item[data-section]').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById(el.dataset.section).classList.add('active');
+        document.getElementById('pageTitle').textContent = el.textContent.trim();
       });
-
-      // ===== API CALLS =====
-      async function loadAnalytics() {
-        try {
-          const url = `${API_BASE}/admin/analytics`;
-          console.log("📤 [Analytics] Calling API:", url);
-          console.log("📤 Token:", token ? "✓ Present" : "✗ Missing");
-
-          const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          console.log("📥 [Analytics] Response Status:", response.status);
-          console.log("📥 [Analytics] Headers:", response.headers);
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
-          const data = await response.json();
-          console.log("✅ [Analytics] Data received:", data);
-
-          document.getElementById("totalUsers").textContent =
-            data.totalUsers || 0;
-          document.getElementById("totalChannels").textContent =
-            data.totalChannels || 0;
-          document.getElementById("totalMessages").textContent = (
-            data.totalMessages || 0
-          ).toLocaleString("vi-VN");
-          document.getElementById("bannedUsers").textContent =
-            data.bannedUsers || 0;
-
-          // Update footers
-          document.getElementById("usersFooter").textContent = "Cập nhật mới nhất";
-          document.getElementById("channelsFooter").textContent = "Cập nhật mới nhất";
-          document.getElementById("messagesFooter").textContent = "Cập nhật mới nhất";
-
-          // Analytics section
-          document.getElementById("totalVisits").textContent = (
-            data.totalVotes || 0
-          ).toLocaleString("vi-VN");
-          document.getElementById("activeUsers").textContent =
-            data.activeUsers || 0;
-          document.getElementById("messagesPerHour").textContent = (
-            data.totalQuiz || 0
-          ).toLocaleString("vi-VN");
-        } catch (error) {
-          console.error("❌ Error loading analytics:", error);
-          document.getElementById("totalUsers").textContent = "⚠️";
-          document.getElementById("usersFooter").textContent =
-            `Lỗi: ${error.message}`;
-        }
-      }
-
-      async function loadUsers() {
-        try {
-          const url = `${API_BASE}/admin/users`;
-          console.log("📤 [Users] Calling API:", url);
-
-          const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          console.log("📥 [Users] Response Status:", response.status);
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          console.log("✅ [Users] Data received:", data);
-          const tbody = document.getElementById("usersTableBody");
-
-          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-            tbody.innerHTML = data.data
-              .map((user, idx) => {
-                const roleClass =
-                  user.role === "admin"
-                    ? "badge-admin"
-                    : user.role === "moderator"
-                      ? "badge-mod"
-                      : "badge-user";
-                const roleText =
-                  user.role === "admin"
-                    ? "Admin"
-                    : user.role === "moderator"
-                      ? "Moderator"
-                      : "User";
-                const statusBadge =
-                  user.status === "active" ? "badge-active" : "badge-banned";
-                const statusText =
-                  user.status === "active" ? "Active" : "Banned";
-
-                return `
-                <tr>
-                  <td>${user.username}</td>
-                  <td>${user.email || user.username + "@simplechat.com"}</td>
-                  <td><span class="badge ${roleClass}">${roleText}</span></td>
-                  <td><span class="badge ${statusBadge}">${statusText}</span></td>
-                  <td>${user.joinedDate || (user.createdAt ? user.createdAt.split('T')[0] : "2026-04-01")}</td>
-                  <td>
-                    <button class="btn btn-primary" onclick="openUserModal(${JSON.stringify(user).replace(/"/g, '&quot;')})">Sửa</button>
-                    ${
-                      user.status === "active"
-                        ? `<button class="btn btn-danger" onclick="banUser('${user.username}')">Ban</button>`
-                        : `<button class="btn btn-success" onclick="unbanUser('${user.username}')">Unban</button>`
-                    }
-                  </td>
-                </tr>
-              `;
-              })
-              .join("");
-          } else {
-            throw new Error("No users data");
-          }
-        } catch (error) {
-          console.error("Error loading users:", error);
-          document.getElementById("usersTableBody").innerHTML =
-            `<tr><td colspan="6" style="text-align: center; color: red;">❌ Lỗi: ${error.message}</td></tr>`;
-        }
-      }
-
-      async function loadChannels() {
-        try {
-          const url = `${API_BASE}/users/channels`;
-          console.log("📤 [Channels] Calling API:", url);
-
-          const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          console.log("📥 [Channels] Response Status:", response.status);
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          console.log("✅ [Channels] Data received:", data);
-          const tbody = document.getElementById("channelsTableBody");
-
-          // API returns data.channels format
-          const channelsArray = data.channels || data.data || [];
-
-          if (Array.isArray(channelsArray) && channelsArray.length > 0) {
-            tbody.innerHTML = channelsArray
-              .map(
-                (channel, idx) => `
-              <tr>
-                <td>${channel.channelId || idx + 1}</td>
-                <td><strong># ${channel.channelName || channel.name}</strong></td>
-                <td>${channel.description || '<i style="color:#999">Không có mô tả</i>'}</td>
-                <td><span class="badge badge-user">${channel.memberCount || channel.members || 0}</span></td>
-                <td><span class="badge badge-mod">${channel.messageCount || 0}</span></td>
-                <td>
-                  <button class="btn btn-primary" onclick="openChannelModal(${JSON.stringify(channel).replace(/"/g, '&quot;')})">Sửa</button>
-                  <button class="btn btn-danger" onclick="deleteChannel(${channel.channelId}, '${channel.channelName || channel.name}')">Xóa</button>
-                </td>
-              </tr>
-            `,
-              )
-              .join("");
-          } else {
-            throw new Error("No channels data");
-          }
-        } catch (error) {
-          console.error("Error loading channels:", error);
-          document.getElementById("channelsTableBody").innerHTML =
-            `<tr><td colspan="6" style="text-align: center; color: red;">❌ Lỗi: ${error.message}</td></tr>`;
-        }
-      }
-
-      async function loadLogs() {
-        try {
-          const url = `${API_BASE}/admin/logs?page=1&pageSize=5`;
-          console.log("📤 Calling API:", url);
-
-          const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          console.log("📥 Response Status:", response.status);
-          console.log(
-            "📥 Response Content-Type:",
-            response.headers.get("content-type"),
-          );
-
-          // If endpoint returns non-JSON, provide mock data
-          let data;
-          const contentType = response.headers.get("content-type");
-          if (
-            response.ok &&
-            contentType &&
-            contentType.includes("application/json")
-          ) {
-            data = await response.json();
-            console.log("✅ Parsed JSON successfully:", data);
-          } else {
-            console.warn("⚠️ Response is not JSON or not OK, using mock data");
-            // Fallback to mock data when endpoint fails
-            data = {
-              page: 1,
-              pageSize: 5,
-              total: 5,
-              logs: [
-                {
-                  timestamp: "2026-04-13 22:50:00",
-                  user: "admin",
-                  action: "LOGIN",
-                  details: "Admin logged in",
-                },
-                {
-                  timestamp: "2026-04-13 22:45:00",
-                  user: "user1",
-                  action: "SEND_MESSAGE",
-                  details: "Sent message in #general",
-                },
-                {
-                  timestamp: "2026-04-13 22:40:00",
-                  user: "mod1",
-                  action: "BAN_USER",
-                  details: "Banned user: spam_user",
-                },
-                {
-                  timestamp: "2026-04-13 22:35:00",
-                  user: "user2",
-                  action: "CREATE_CHANNEL",
-                  details: "Created channel #dev",
-                },
-                {
-                  timestamp: "2026-04-13 22:30:00",
-                  user: "admin",
-                  action: "UPDATE_SETTINGS",
-                  details: "Updated system settings",
-                },
-              ],
-            };
-          }
-
-          console.log("Logs data:", data);
-          const tbody = document.getElementById("logsTableBody");
-
-          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-            tbody.innerHTML = data.data
-              .map(
-                (log) => `
-              <tr>
-                <td>${log.createdAt ? log.createdAt.split("T")[0] + " " + log.createdAt.split("T")[1].substring(0, 8) : log.timestamp || "N/A"}</td>
-                <td>${log.username || log.user || "Unknown"}</td>
-                <td>${log.action || "N/A"}</td>
-                <td>${log.description || log.details || "N/A"}</td>
-                <td>${log.ipAddress || "0.0.0.0"}</td>
-              </tr>
-            `,
-              )
-              .join("");
-          } else {
-            throw new Error("No logs data");
-          }
-        } catch (error) {
-          console.error("Error loading logs:", error);
-          // Show "No logs available" instead of mock data
-          document.getElementById("logsTableBody").innerHTML = `
-            <tr>
-              <td colspan="5" style="text-align: center; color: #999; padding: 20px;">
-                📭 Chưa có activity logs. Hệ thống sẽ ghi lại khi có hành động từ users.
-              </td>
-            </tr>
-          `;
-        }
-      }
-
-      // ===== HELPER FUNCTIONS =====
-      function updateTime() {
-        const now = new Date();
-        document.getElementById("currentTime").textContent = now.toLocaleString(
-          "vi-VN",
-          {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          },
-        );
-      }
-
-      async function viewUserDetail(username) {
-        try {
-          console.log(`📤 Fetching details for user: ${username}`);
-          const response = await fetch(`${API_BASE}/admin/users/${username}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const user = await response.json();
-          console.log("✅ User data received:", user);
-
-          // Format created date
-          const createdDate = new Date(user.createdAt);
-          const lastLoginDate = user.lastLogin
-            ? new Date(user.lastLogin)
-            : null;
-
-          document.getElementById("modalUsername").textContent =
-            user.username || "N/A";
-          document.getElementById("detailsEmail").textContent =
-            user.email || "N/A";
-          document.getElementById("detailsFullName").textContent =
-            user.fullName || "N/A";
-          document.getElementById("detailsRole").textContent =
-            user.role?.toUpperCase() || "USER";
-          document.getElementById("detailsStatus").innerHTML =
-            `<span class="detail-value status-${user.status === "banned" ? "banned" : "active"}">${user.status === "banned" ? "🚫 Bị Ban" : "✅ Hoạt Động"}</span>`;
-          document.getElementById("detailsCreated").textContent =
-            createdDate.toLocaleString("vi-VN");
-          document.getElementById("detailsLastLogin").textContent =
-            lastLoginDate
-              ? lastLoginDate.toLocaleString("vi-VN")
-              : "Chưa đăng nhập";
-          document.getElementById("detailsAvatar").textContent =
-            user.avatarUrl || "Không có";
-
-          // Show modal
-          document.getElementById("userDetailModal").classList.add("active");
-        } catch (error) {
-          console.error("Error loading user details:", error);
-          alert("❌ Lỗi khi tải chi tiết user: " + error.message);
-        }
-      }
-
-      function closeUserDetailModal() {
-        document.getElementById("userDetailModal").classList.remove("active");
-      }
-
-      // ===== USER MANAGEMENT =====
-      let currentEditingUsername = null;
-
-      function openUserModal(user) {
-        const modal = document.getElementById("userFormModal");
-        currentEditingUsername = user.username;
-
-        document.getElementById("userFormTitle").textContent = `✏️ Sửa User: ${user.username}`;
-        document.getElementById("editUserEmail").value = user.email || "";
-        document.getElementById("editUserFullName").value = user.fullName || "";
-        document.getElementById("editUserRole").value = user.role || "user";
-        document.getElementById("editUserStatus").value = user.status || "active";
-
-        modal.classList.add("active");
-      }
-
-      function closeUserModal() {
-        document.getElementById("userFormModal").classList.remove("active");
-      }
-
-      async function saveUser() {
-        const email = document.getElementById("editUserEmail").value.trim();
-        const fullName = document.getElementById("editUserFullName").value.trim();
-        const role = document.getElementById("editUserRole").value;
-        const status = document.getElementById("editUserStatus").value;
-
-        try {
-          const response = await fetch(`${API_BASE}/admin/users/${currentEditingUsername}`, {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email, fullName, role, status }),
-          });
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          alert(`✅ ${data.message}`);
-          closeUserModal();
-          loadUsers();
-          loadAnalytics();
-        } catch (error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        }
-      }
-
-      async function banUser(username) {
-        const reason = prompt(`Nhập lý do ban ${username}:`);
-        if (!reason) return;
-
-        try {
-          const response = await fetch(
-            `${API_BASE}/admin/users/${username}/ban`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ reason }),
-            },
-          );
-          alert(`✅ ${username} đã bị ban!`);
-          loadUsers();
-          loadAnalytics();
-        } catch (error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        }
-      }
-
-      async function unbanUser(username) {
-        try {
-          const response = await fetch(
-            `${API_BASE}/admin/users/${username}/unban`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          );
-          alert(`✅ ${username} đã được gỡ ban!`);
-          loadUsers();
-          loadAnalytics();
-        } catch (error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        }
-      }
-
-      // ===== CHANNEL MANAGEMENT =====
-      let currentEditingChannelId = null;
-
-      function openChannelModal(channel = null) {
-        const modal = document.getElementById("channelFormModal");
-        const title = document.getElementById("channelModalTitle");
-        const nameInput = document.getElementById("channelNameInput");
-        const descInput = document.getElementById("channelDescInput");
-        const typeInput = document.getElementById("channelTypeInput");
-
-        if (channel) {
-          // Mode: Edit
-          currentEditingChannelId = channel.channelId;
-          title.textContent = "✏️ Chỉnh Sửa Channel";
-          nameInput.value = channel.channelName || channel.name || "";
-          descInput.value = channel.description || "";
-          typeInput.value = channel.channelType || "public";
-        } else {
-          // Mode: Add
-          currentEditingChannelId = null;
-          title.textContent = "➕ Tạo Channel Mới";
-          nameInput.value = "";
-          descInput.value = "";
-          typeInput.value = "public";
-        }
-
-        modal.classList.add("active");
-      }
-
-      function closeChannelModal() {
-        document.getElementById("channelFormModal").classList.remove("active");
-      }
-
-      async function saveChannel() {
-        const name = document.getElementById("channelNameInput").value.trim();
-        const desc = document.getElementById("channelDescInput").value.trim();
-        const type = document.getElementById("channelTypeInput").value;
-
-        if (!name) {
-          alert("Vui lòng nhập tên channel!");
-          return;
-        }
-
-        const isEdit = currentEditingChannelId !== null;
-        const url = isEdit
-          ? `${API_BASE}/admin/channels/${currentEditingChannelId}`
-          : `${API_BASE}/admin/channels`;
-        const method = isEdit ? "PUT" : "POST";
-
-        try {
-          const response = await fetch(url, {
-            method: method,
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              channelName: name,
-              description: desc,
-              channelType: type,
-            }),
-          });
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          alert(`✅ ${data.message || "Thành công!"}`);
-          closeChannelModal();
-          loadChannels();
-          loadAnalytics();
-        } catch (error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        }
-      }
-
-      async function deleteChannel(channelId, channelName) {
-        if (!confirm(`Bạn có chắc chắn muốn xóa channel #${channelName}?`))
-          return;
-
-        try {
-          const response = await fetch(
-            `${API_BASE}/admin/channels/${channelId}/delete`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            },
-          );
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          alert(`✅ ${data.message}`);
-          loadChannels();
-          loadAnalytics();
-        } catch (error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        }
-      }
-
-      // Navigation
-      document.querySelectorAll(".nav-link").forEach((link) => {
-        link.addEventListener("click", (e) => {
-          e.preventDefault();
-          const section = link.dataset.section;
-
-          document
-            .querySelectorAll(".content-section")
-            .forEach((s) => s.classList.remove("active"));
-          document.getElementById(section).classList.add("active");
-
-          document
-            .querySelectorAll(".nav-link")
-            .forEach((l) => l.classList.remove("active"));
-          link.classList.add("active");
+    });
+  });
+
+  function updateTime(){
+    document.getElementById('currentTime').textContent = new Date().toLocaleString('vi-VN');
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const res = await fetch(`${API}/admin/analytics`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      document.getElementById('statTotalUsers').textContent = d.totalUsers || 0;
+      document.getElementById('statChannels').textContent   = d.totalChannels || 0;
+      document.getElementById('statMessages').textContent   = (d.totalMessages||0).toLocaleString('vi-VN');
+      document.getElementById('statBanned').textContent     = d.bannedUsers || 0;
+      document.getElementById('statAdmins').textContent     = d.adminUsers || 0;
+      document.getElementById('statPending').textContent    = d.pendingMembers || 0;
+      document.getElementById('statVotes').textContent      = d.totalVotes || 0;
+      document.getElementById('statQuiz').textContent       = d.totalQuiz || 0;
+      document.getElementById('statActive').textContent     = d.activeUsers || 0;
+      document.getElementById('statUsersub').textContent    = `${d.activeUsers||0} đang hoạt động`;
+      document.getElementById('statChannelSub').textContent = `${d.totalChannels||0} kênh`;
+    } catch(e) { console.error(e); }
+    loadOnlineUsers();
+    loadRecentChannels();
+  }
+
+  async function loadOnlineUsers() {
+    const el = document.getElementById('onlineList');
+    try {
+      const res = await fetch(`${API}/admin/users`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      const users = (d.data||[]).filter(u => u.status === 'active').slice(0,8);
+      document.getElementById('statOnline').textContent = users.length;
+      el.innerHTML = users.length ? users.map(u => `
+        <div class="online-item">
+          <div class="online-avatar" style="background:${uc(u.username)}">${ini(u.username)}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600">${u.username}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${u.role}</div>
+          </div>
+          <div class="online-dot"></div>
+        </div>`).join('')
+      : '<div style="color:var(--text-dim);font-size:13px;padding:8px 0">Không có ai online</div>';
+    } catch(e) { el.innerHTML = '<div style="color:red;font-size:13px">Lỗi tải dữ liệu</div>'; }
+  }
+
+  async function loadRecentChannels() {
+    const el = document.getElementById('recentChannelsList');
+    try {
+      const res = await fetch(`${API}/users/channels`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      const chs = (d.channels||[]).slice(0,6);
+      el.innerHTML = chs.length ? chs.map(ch => {
+        const type = ch.channelType || 'public';
+        const color = CHANNEL_COLORS[type] || '#6c63ff';
+        const icon  = CHANNEL_ICONS[type]  || '#';
+        const badgeClass = type === 'public' ? 'badge-public' : type === 'private' ? 'badge-private' : 'badge-group';
+        return `<div class="channel-item">
+          <div class="channel-icon" style="background:${color}22;color:${color}">${icon}</div>
+          <div class="channel-info">
+            <div class="ch-name">${ch.channelName}</div>
+            <div class="ch-sub">${ch.memberCount||0} thành viên · ${ch.messageCount||0} tin nhắn</div>
+          </div>
+          <span class="badge ${badgeClass} ch-badge">${type}</span>
+        </div>`;
+      }).join('')
+      : '<div style="color:var(--text-dim);font-size:13px;padding:8px 0">Chưa có kênh nào</div>';
+    } catch(e) { el.innerHTML = '<div style="color:red;font-size:13px">Lỗi tải dữ liệu</div>'; }
+  }
+
+  // ── Users ──────────────────────────────────────────────────────
+  let allUsers = [];
+
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API}/admin/users`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      allUsers = d.data || [];
+      renderUsers(allUsers);
+    } catch(e) { document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:red">Lỗi: ${e.message}</td></tr>`; }
+  }
+
+  async function searchUsers(q) {
+    if (!q.trim()) { renderUsers(allUsers); return; }
+    try {
+      const res = await fetch(`${API}/admin/users/search?q=${encodeURIComponent(q)}`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      renderUsers(d.data || []);
+    } catch(e) { renderUsers(allUsers.filter(u => u.username.toLowerCase().includes(q.toLowerCase()))); }
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('usersTableBody');
+    if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">Không tìm thấy</td></tr>'; return; }
+    tbody.innerHTML = users.map(u => {
+      const rc = u.role==='admin'?'badge-admin':u.role==='moderator'?'badge-mod':'badge-user';
+      const sc = u.status==='active'?'badge-active':u.status==='inactive'?'badge-mod':'badge-banned';
+      const date = u.createdAt ? u.createdAt.split('T')[0] : '---';
+      const actionBtns = u.status === 'active'
+        ? `<button class="btn btn-danger" onclick="setUserStatus('${u.username}','ban')" title="Ban">🚫 Ban</button>
+           <button class="btn" style="background:#fef3c7;color:#92400e" onclick="setUserStatus('${u.username}','disable')" title="Vô hiệu hóa">⏸ Tắt</button>`
+        : `<button class="btn btn-success" onclick="setUserStatus('${u.username}','restore')" title="Khôi phục">✅ Khôi phục</button>`;
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div style="width:30px;height:30px;border-radius:8px;background:${uc(u.username)};display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:12px">${ini(u.username)}</div>
+          <strong>${u.username}</strong></div></td>
+        <td style="color:var(--text-dim)">${u.email||'---'}</td>
+        <td><span class="badge ${rc}">${u.role}</span></td>
+        <td><span class="badge ${sc}">${u.status}</span></td>
+        <td style="color:var(--text-dim)">${date}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick='openUserModal(${JSON.stringify(u)})'>✏️ Sửa</button>
+          ${actionBtns}
+        </td></tr>`;
+    }).join('');
+  }
+
+  async function setUserStatus(username, action) {
+    const labels = { ban:'Ban', disable:'Vô hiệu hóa', restore:'Khôi phục' };
+    if (!confirm(`${labels[action]} user "${username}"?`)) return;
+    const endpoint = action === 'ban' ? 'ban' : action === 'disable' ? 'disable' : 'restore';
+    const method = 'POST';
+    try {
+      const res = await fetch(`${API}/admin/users/${username}/${endpoint}`, {
+        method, headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+        body: action === 'ban' ? JSON.stringify({ reason: 'Admin action' }) : undefined
+      });
+      const d = await res.json();
+      alert(d.message || 'Thành công');
+      loadUsers(); loadDashboard();
+    } catch(e) { alert('Lỗi: '+e.message); }
+  }
+
+  function openUserModal(u) {
+    document.getElementById('editUsername').value = u.username;
+    document.getElementById('editRole').value = u.role;
+    document.getElementById('editStatus').value = u.status;
+    document.getElementById('userModal').classList.add('active');
+  }
+
+  async function saveUser() {
+    const uname = document.getElementById('editUsername').value;
+    const role  = document.getElementById('editRole').value;
+    const status= document.getElementById('editStatus').value;
+    try {
+      await fetch(`${API}/admin/users/${uname}`, {
+        method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+        body: JSON.stringify({ role, status })
+      });
+      closeModal('userModal'); loadUsers(); loadDashboard();
+    } catch(e) { alert('Lỗi: '+e.message); }
+  }
+
+  // ── Channels ───────────────────────────────────────────────────
+  let allChannels = [];
+
+  async function loadChannels() {
+    try {
+      const res = await fetch(`${API}/users/channels`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      allChannels = d.channels || [];
+      renderChannels(allChannels);
+    } catch(e) { document.getElementById('channelsTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:red">Lỗi: ${e.message}</td></tr>`; }
+  }
+
+  async function searchChannels(q) {
+    if (!q.trim()) { renderChannels(allChannels); return; }
+    try {
+      const res = await fetch(`${API}/admin/channels/search?q=${encodeURIComponent(q)}`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      renderChannels(d.channels || []);
+    } catch(e) { renderChannels(allChannels.filter(c => c.channelName.toLowerCase().includes(q.toLowerCase()))); }
+  }
+
+  function renderChannels(channels) {
+    const tbody = document.getElementById('channelsTableBody');
+    if (!channels.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">Không tìm thấy</td></tr>'; return; }
+    tbody.innerHTML = channels.map(ch => {
+      const type = ch.channelType||'public';
+      const tc = type==='public'?'badge-public':type==='private'?'badge-private':'badge-group';
+      const autoApprove = ch.autoApprove !== false;
+      const toggleLabel = autoApprove ? '🔓 Tắt tự duyệt' : '🔒 Bật tự duyệt';
+      const toggleStyle = autoApprove ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b';
+      return `<tr>
+        <td><strong>${ch.channelName}</strong><div style="font-size:11px;color:var(--text-dim)">${ch.description||''}</div></td>
+        <td><span class="badge ${tc}">${type}</span></td>
+        <td>
+          ${ch.inviteCode
+            ? `<code style="background:#f1f5f9;padding:3px 8px;border-radius:6px;font-size:12px;cursor:pointer" onclick="openChatByCode('${ch.inviteCode}')" title="Click để mở chat">${ch.inviteCode}</code>`
+            : '<span style="color:var(--text-dim);font-size:12px">---</span>'}
+        </td>
+        <td><span class="badge ${autoApprove?'badge-active':'badge-banned'}">${autoApprove?'Bật':'Tắt'}</span></td>
+        <td>${ch.memberCount||0}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick='openChannelModal(${JSON.stringify(ch)})'>✏️ Sửa</button>
+          <button class="btn" style="${toggleStyle}" onclick="adminToggleAutoApprove(${ch.channelId},${!autoApprove})">${toggleLabel}</button>
+          <button class="btn btn-danger" onclick="deleteChannel(${ch.channelId},'${ch.channelName}')">🗑 Xóa</button>
+        </td></tr>`;
+    }).join('');
+  }
+
+  function openChatByCode(code) {
+    window.open(`chat.html`, '_blank');
+    // Store code to auto-join after redirect
+    localStorage.setItem('pendingJoinCode', code);
+  }
+
+  async function adminToggleAutoApprove(channelId, newVal) {
+    try {
+      const res = await fetch(`${API}/admin/channels/${channelId}/auto-approve`, {
+        method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+        body: JSON.stringify({ autoApprove: newVal })
+      });
+      const d = await res.json();
+      alert(d.message);
+      loadChannels();
+    } catch(e) { alert('Lỗi: '+e.message); }
+  }
+
+  function openChannelModal(ch) {
+    document.getElementById('channelModalTitle').textContent = ch ? '✏️ Sửa kênh' : '➕ Tạo kênh mới';
+    document.getElementById('editChannelId').value   = ch ? (ch.channelId||'') : '';
+    document.getElementById('editChannelName').value = ch ? ch.channelName : '';
+    document.getElementById('editChannelDesc').value = ch ? (ch.description||'') : '';
+    document.getElementById('editChannelType').value = ch ? (ch.channelType||'public') : 'public';
+    document.getElementById('channelModal').classList.add('active');
+  }
+
+  async function saveChannel() {
+    const id   = document.getElementById('editChannelId').value;
+    const name = document.getElementById('editChannelName').value.trim();
+    const desc = document.getElementById('editChannelDesc').value.trim();
+    const type = document.getElementById('editChannelType').value;
+    if (!name) { alert('Nhập tên kênh'); return; }
+    try {
+      if (id) {
+        await fetch(`${API}/admin/channels/${id}`, {
+          method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+          body: JSON.stringify({ channelName:name, description:desc, channelType:type })
         });
-      });
-
-      function filterTable(tableId) {
-        const searchInput = document
-          .getElementById("userSearch")
-          .value.toLowerCase();
-        const table = document.getElementById(tableId);
-        const rows = table.querySelectorAll("tbody tr");
-
-        rows.forEach((row) => {
-          const text = row.innerText.toLowerCase();
-          row.style.display = text.includes(searchInput) ? "" : "none";
+      } else {
+        await fetch(`${API}/admin/channels`, {
+          method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+          body: JSON.stringify({ channelName:name, description:desc, channelType:type })
         });
       }
+      closeModal('channelModal'); loadChannels(); loadDashboard();
+    } catch(e) { alert('Lỗi: '+e.message); }
+  }
 
-      // Removed old addChannel prompt function as it is now handled by saveChannel() through the modal.
+  async function deleteChannel(id, name) {
+    if (!confirm(`Xóa kênh "${name}"? Toàn bộ tin nhắn sẽ bị xóa.`)) return;
+    await fetch(`${API}/admin/channels/${id}/delete`, { method:'POST', headers:{ Authorization:'Bearer '+token }});
+    loadChannels(); loadDashboard();
+  }
 
-      function logout() {
-        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-          localStorage.clear();
-          window.location.href = "login.html";
-        }
-      }
-    </script>
+  // ── Logs ───────────────────────────────────────────────────────
+  async function loadLogs() {
+    try {
+      const res = await fetch(`${API}/admin/logs?page=1&pageSize=20`, { headers:{ Authorization:'Bearer '+token }});
+      const d = await res.json();
+      const tbody = document.getElementById('logsTableBody');
+      const logs = d.data || d.logs || [];
+      if (!logs.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-dim)">Không có log</td></tr>'; return; }
+      tbody.innerHTML = logs.map(l => `<tr>
+        <td style="color:var(--text-dim);white-space:nowrap">${l.createdAt ? l.createdAt.replace('T',' ').substring(0,19) : l.timestamp||'---'}</td>
+        <td><strong>${l.username||l.user||'---'}</strong></td>
+        <td><span class="badge badge-user">${l.action||'---'}</span></td>
+        <td style="color:var(--text-dim)">${l.description||l.details||'---'}</td>
+        <td style="color:var(--text-dim)">${l.ipAddress||'---'}</td>
+      </tr>`).join('');
+    } catch(e) { document.getElementById('logsTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center;color:red">Lỗi: ${e.message}</td></tr>`; }
+  }
 
-    <!-- User Form Modal -->
-    <div id="userFormModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 id="userFormTitle">✏️ Sửa Thông Tin User</h2>
-          <button class="modal-close" onclick="closeUserModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>📧 Email</label>
-            <input type="email" id="editUserEmail" placeholder="email@example.com" />
-          </div>
-          <div class="form-group">
-            <label>👤 Họ và Tên</label>
-            <input type="text" id="editUserFullName" placeholder="Nguyễn Văn A" />
-          </div>
-          <div class="form-group">
-            <label>🛡️ Vai Trò</label>
-            <select id="editUserRole">
-              <option value="user">User (Người dùng)</option>
-              <option value="moderator">Moderator (Kiểm duyệt)</option>
-              <option value="admin">Admin (Quản trị)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>🚥 Trạng Thái</label>
-            <select id="editUserStatus">
-              <option value="active">Hoạt động (Active)</option>
-              <option value="inactive">Không hoạt động (Inactive)</option>
-              <option value="banned">Bị khóa (Banned)</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" onclick="closeUserModal()">Hủy</button>
-          <button class="btn btn-primary" onclick="saveUser()">💾 Cập Nhật</button>
-        </div>
-      </div>
-    </div>
-    <!-- Channel Form Modal -->
-    <div id="channelFormModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 id="channelModalTitle">➕ Channel Mới</h2>
-          <button class="modal-close" onclick="closeChannelModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>🏷️ Tên Channel</label>
-            <input
-              type="text"
-              id="channelNameInput"
-              placeholder="Ví dụ: general, dev-team..."
-            />
-          </div>
-          <div class="form-group">
-            <label>📝 Mô Tả</label>
-            <textarea
-              id="channelDescInput"
-              style="
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #bdc3c7;
-                border-radius: 5px;
-                font-family: inherit;
-                min-height: 80px;
-              "
-              placeholder="Mô tả mục đích của channel này..."
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label>🔒 Loại Channel</label>
-            <select id="channelTypeInput">
-              <option value="public">Công khai (Public)</option>
-              <option value="private">Riêng tư (Private)</option>
-              <option value="group">Nhóm (Group)</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" onclick="closeChannelModal()">Hủy</button>
-          <button class="btn btn-success" onclick="saveChannel()">
-            💾 Lưu Lại
-          </button>
-        </div>
-      </div>
-    </div>
-  </body>
+  // ── Helpers ────────────────────────────────────────────────────
+  function filterTable(tableId, q) {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  function logout() {
+    if (confirm('Đăng xuất?')) { localStorage.clear(); window.location.href = 'login.html'; }
+  }
+</script>
+</body>
 </html>

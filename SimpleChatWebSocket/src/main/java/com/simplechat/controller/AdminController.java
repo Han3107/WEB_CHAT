@@ -25,6 +25,7 @@ import com.simplechat.entity.User;
 import com.simplechat.repository.ActivityLogRepository;
 import com.simplechat.repository.AppStatisticsRepository;
 import com.simplechat.repository.BannedUserRepository;
+import com.simplechat.repository.ChannelMemberRepository;
 import com.simplechat.repository.ChannelRepository;
 import com.simplechat.repository.MessageRepository;
 import com.simplechat.repository.TaskRepository;
@@ -46,6 +47,9 @@ public class AdminController extends BaseController {
     
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private com.simplechat.repository.ChannelMemberRepository channelMemberRepository;
     
     @Autowired
     private AppStatisticsRepository appStatisticsRepository;
@@ -217,6 +221,99 @@ public class AdminController extends BaseController {
     }
     
     /**
+     * Vô hiệu hóa tài khoản (inactive, không phải ban)
+     * POST /api/admin/users/{username}/disable
+     */
+    @PostMapping("/users/{username}/disable")
+    public ResponseEntity<?> disableUser(@PathVariable String username) {
+        try {
+            User u = userRepository.findByUsername(username).orElse(null);
+            if (u == null) return buildErrorResponse("User không tồn tại");
+            u.setStatus("inactive");
+            userRepository.save(u);
+            return ResponseEntity.ok(Map.of("message", "Đã vô hiệu hóa tài khoản " + username));
+        } catch (Exception e) { return buildErrorResponse(e.getMessage()); }
+    }
+
+    /**
+     * Khôi phục tài khoản (inactive/banned → active)
+     * POST /api/admin/users/{username}/restore
+     */
+    @PostMapping("/users/{username}/restore")
+    public ResponseEntity<?> restoreUser(@PathVariable String username) {
+        try {
+            User u = userRepository.findByUsername(username).orElse(null);
+            if (u == null) return buildErrorResponse("User không tồn tại");
+            u.setStatus("active");
+            userRepository.save(u);
+            return ResponseEntity.ok(Map.of("message", "Đã khôi phục tài khoản " + username));
+        } catch (Exception e) { return buildErrorResponse(e.getMessage()); }
+    }
+
+    /**
+     * Tìm kiếm user
+     * GET /api/admin/users/search?q=...
+     */
+    @GetMapping("/users/search")
+    public ResponseEntity<?> searchUsers(@RequestParam String q) {
+        try {
+            List<User> results = userRepository.findAll().stream()
+                .filter(u -> u.getUsername().toLowerCase().contains(q.toLowerCase())
+                    || (u.getEmail() != null && u.getEmail().toLowerCase().contains(q.toLowerCase()))
+                    || (u.getFullName() != null && u.getFullName().toLowerCase().contains(q.toLowerCase())))
+                .collect(Collectors.toList());
+            List<Map<String, Object>> list = results.stream().map(u -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("username", u.getUsername()); m.put("email", u.getEmail());
+                m.put("fullName", u.getFullName()); m.put("role", u.getRole());
+                m.put("status", u.getStatus()); m.put("createdAt", u.getCreatedAt());
+                return m;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(Map.of("data", list, "count", list.size()));
+        } catch (Exception e) { return buildErrorResponse(e.getMessage()); }
+    }
+
+    /**
+     * Tìm kiếm channel
+     * GET /api/admin/channels/search?q=...
+     */
+    @GetMapping("/channels/search")
+    public ResponseEntity<?> searchChannels(@RequestParam String q) {
+        try {
+            List<Channel> results = channelRepository.findAll().stream()
+                .filter(c -> c.getChannelName().toLowerCase().contains(q.toLowerCase())
+                    || (c.getDescription() != null && c.getDescription().toLowerCase().contains(q.toLowerCase())))
+                .collect(Collectors.toList());
+            List<Map<String, Object>> list = results.stream().map(c -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("channelId", c.getChannelId()); m.put("channelName", c.getChannelName());
+                m.put("description", c.getDescription()); m.put("channelType", c.getChannelType());
+                m.put("inviteCode", c.getInviteCode()); m.put("autoApprove", c.getAutoApprove());
+                m.put("isActive", c.getIsActive());
+                m.put("memberCount", channelMemberRepository.countMembersByChannel(c.getChannelId()));
+                return m;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(Map.of("channels", list, "count", list.size()));
+        } catch (Exception e) { return buildErrorResponse(e.getMessage()); }
+    }
+
+    /**
+     * Bật/tắt auto-approve cho channel (admin)
+     * POST /api/admin/channels/{channelId}/auto-approve
+     */
+    @PostMapping("/channels/{channelId}/auto-approve")
+    public ResponseEntity<?> toggleAutoApprove(@PathVariable Integer channelId, @RequestBody Map<String, Boolean> body) {
+        try {
+            Channel ch = channelRepository.findById(channelId).orElse(null);
+            if (ch == null) return buildErrorResponse("Channel không tồn tại");
+            boolean val = Boolean.TRUE.equals(body.get("autoApprove"));
+            ch.setAutoApprove(val);
+            channelRepository.save(ch);
+            return ResponseEntity.ok(Map.of("message", val ? "Đã bật tự duyệt" : "Đã tắt tự duyệt", "autoApprove", val));
+        } catch (Exception e) { return buildErrorResponse(e.getMessage()); }
+    }
+
+    /**
      * Xem activity logs
      * GET /api/admin/logs?page=1&pageSize=50
      */
@@ -318,6 +415,13 @@ public class AdminController extends BaseController {
             response.put("totalQuiz", totalQuiz);
             response.put("activeSessions", activeUsers.size());
             response.put("bannedUsers", bannedUsers);
+            // Admin count
+            long adminCount = userRepository.findAll().stream().filter(u -> "admin".equals(u.getRole())).count();
+            response.put("adminUsers", adminCount);
+            // Pending channel members
+            long pendingMembers = channelMemberRepository.findAll().stream()
+                .filter(cm -> "pending".equals(cm.getStatus())).count();
+            response.put("pendingMembers", pendingMembers);
             response.put("timestamp", System.currentTimeMillis());
             
             return ResponseEntity.ok(response);

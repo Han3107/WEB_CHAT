@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -439,6 +439,69 @@
       .btn-view-all:hover { background: #e0e7ff; }
 
       /* Collapsible sections */
+      /* Friend features */
+      .search-results {
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: white; border-radius: 14px; margin-top: 6px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 200;
+        max-height: 320px; overflow-y: auto; display: none;
+      }
+      .search-results.open { display: block; }
+      .search-result-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 16px; cursor: pointer; transition: 0.15s;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .search-result-item:last-child { border-bottom: none; }
+      .search-result-item:hover { background: var(--bg-secondary); }
+      .friend-action-btn {
+        margin-left: auto; padding: 5px 12px; border: none;
+        border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+      }
+      .btn-add-friend { background: var(--primary-light); color: var(--primary); }
+      .btn-pending { background: #fef3c7; color: #d97706; }
+      .btn-friends { background: #dcfce7; color: #16a34a; }
+      .btn-msg { background: #ede9fe; color: #7c3aed; }
+      .pending-badge-nav {
+        position: absolute; top: -4px; right: -4px;
+        background: #ef4444; color: white; font-size: 10px;
+        font-weight: 700; border-radius: 50%; width: 16px; height: 16px;
+        display: flex; align-items: center; justify-content: center;
+      }
+
+      /* Group modals */
+      .modal-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.4); z-index: 200;
+        align-items: center; justify-content: center;
+      }
+      .modal-overlay.open { display: flex; }
+      .modal-box {
+        background: white; border-radius: 20px; padding: 28px;
+        width: 420px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      }
+      .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+      .modal-field { margin-bottom: 14px; }
+      .modal-field label { font-size: 13px; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px; }
+      .modal-field input, .modal-field select, .modal-field textarea {
+        width: 100%; padding: 10px 14px; border: 1px solid var(--border-color);
+        border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;
+      }
+      .modal-field input:focus, .modal-field select:focus { border-color: var(--primary); }
+      .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+      .btn-primary { padding: 10px 22px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; }
+      .btn-secondary { padding: 10px 22px; background: var(--bg-secondary); color: var(--text-main); border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; }
+      .invite-code-box {
+        background: var(--bg-secondary); border-radius: 12px; padding: 14px 18px;
+        font-size: 22px; font-weight: 700; letter-spacing: 4px; text-align: center;
+        color: var(--primary); cursor: pointer; margin: 12px 0;
+      }
+      .invite-code-box:hover { background: var(--primary-light); }
+      .pending-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+      .pending-item:last-child { border-bottom: none; }
+      .btn-approve { padding: 6px 14px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+      .btn-reject { padding: 6px 14px; background: #fee2e2; color: #ef4444; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+
       .section-header {
         display: flex;
         align-items: center;
@@ -474,6 +537,48 @@
         padding: 1px 7px;
         margin-left: 6px;
       }
+      /* Members panel */
+      .members-panel {
+        position: absolute; right: 0; top: 0; bottom: 0;
+        width: 260px; background: white;
+        border-left: 1px solid var(--border-color);
+        display: flex; flex-direction: column;
+        transform: translateX(100%); transition: transform 0.25s ease;
+        z-index: 50;
+      }
+      .members-panel.open { transform: translateX(0); }
+      .members-panel-header {
+        padding: 16px 20px; font-weight: 700; font-size: 15px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex; justify-content: space-between; align-items: center;
+      }
+      .members-panel-header i { cursor: pointer; color: var(--text-dim); }
+      .members-list { flex: 1; overflow-y: auto; padding: 12px 0; }
+      .member-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 20px; font-size: 14px;
+      }
+      .member-item .role-badge {
+        font-size: 10px; padding: 2px 6px; border-radius: 8px;
+        background: var(--primary-light); color: var(--primary); font-weight: 600;
+      }
+      .member-item .role-badge.owner { background: #fef3c7; color: #d97706; }
+      .member-item .role-badge.moderator { background: #ede9fe; color: #7c3aed; }
+      .online-dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; border: 2px solid white; display: inline-block; }
+      .offline-dot { width: 9px; height: 9px; border-radius: 50%; background: #d1d5db; border: 2px solid white; display: inline-block; }
+      /* Emoji picker */
+      .emoji-picker {
+        position: absolute; bottom: 80px; left: 32px;
+        background: white; border: 1px solid var(--border-color);
+        border-radius: 16px; padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        display: none; flex-wrap: wrap; gap: 6px; width: 280px; z-index: 100;
+      }
+      .emoji-picker.open { display: flex; }
+      .emoji-btn { font-size: 22px; cursor: pointer; padding: 4px; border-radius: 8px; transition: 0.15s; }
+      .emoji-btn:hover { background: var(--bg-secondary); transform: scale(1.2); }
+      /* Image message */
+      .bubble img { max-width: 220px; border-radius: 12px; display: block; margin-top: 4px; cursor: pointer; }
+
       .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); padding: 40px; text-align: center; }
       .empty-chat i { font-size: 64px; margin-bottom: 20px; opacity: 0.3; }
 
@@ -498,9 +603,17 @@
       <!-- 2: Conversations Sidebar -->
       <aside class="list-sidebar">
         <div class="sidebar-header">
-          <div class="search-box">
+          <div class="search-box" style="position:relative">
             <i class="fas fa-search"></i>
-            <input type="text" placeholder="Search">
+            <input type="text" id="searchInput" placeholder="Tìm nhóm, bạn bè..." oninput="onSearchInput(this.value)">
+            <div class="search-results" id="searchResults"></div>
+          </div>
+          <!-- Pending friend requests badge -->
+          <div style="display:flex;gap:8px;margin-top:10px;padding:0 4px">
+            <div onclick="openModal('pendingFriendsModal');loadPendingFriends()" style="position:relative;cursor:pointer;padding:6px 12px;background:var(--bg-secondary);border-radius:10px;font-size:13px;font-weight:600;color:var(--text-dim);display:flex;align-items:center;gap:6px">
+              <i class="fas fa-user-clock"></i> Lời mời
+              <span id="pendingFriendCount" style="display:none" class="pending-badge-nav" style="position:static;width:auto;padding:0 5px;border-radius:8px">0</span>
+            </div>
           </div>
         </div>
 
@@ -533,18 +646,21 @@
           </div>
         </div>
 
-        <div class="fab-add">
-          <i class="fas fa-plus"></i>
+      <!-- FAB: tạo nhóm / vào nhóm -->
+        <div class="fab-add" onclick="toggleFabMenu()" id="fabBtn">
+          <i class="fas fa-plus" id="fabIcon"></i>
+        </div>
+        <div id="fabMenu" style="display:none;position:absolute;bottom:90px;right:24px;background:white;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;z-index:50">
+          <div onclick="openModal('createGroupModal');toggleFabMenu()" style="padding:14px 20px;cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-color)"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> Tạo nhóm mới</div>
+          <div onclick="openModal('joinCodeModal');toggleFabMenu()" style="padding:14px 20px;cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px"><i class="fas fa-key" style="color:#60a5fa"></i> Vào nhóm bằng mã</div>
         </div>
       </aside>
 
       <!-- 3: Main Chat Window -->
-      <main class="chat-main" id="chatMainWindow">
+      <main class="chat-main" id="chatMainWindow" style="position:relative">
         <div class="chat-header">
           <div class="header-info">
-            <div class="header-avatar" id="headerAvatar">
-              <img src="https://i.pravatar.cc/150?u=placeholder" alt="">
-            </div>
+            <div class="header-avatar" id="headerAvatar"></div>
             <div class="header-user">
               <h2 id="currentChatName">Select a conversation</h2>
               <div class="header-status" id="headerStatus">Last seen 2 hours ago</div>
@@ -553,6 +669,9 @@
           <div class="header-actions">
             <i class="fas fa-phone-alt"></i>
             <i class="fas fa-video"></i>
+            <i class="fas fa-users" id="btnMembers" title="Thành viên" onclick="toggleMembersPanel()" style="display:none"></i>
+            <i class="fas fa-user-plus" id="btnInvite" title="Mời thành viên" onclick="openInviteModal()" style="display:none"></i>
+            <i class="fas fa-cog" id="btnGroupSettings" title="Cài đặt nhóm" onclick="openGroupSettings()" style="display:none"></i>
             <i class="fas fa-ellipsis-h"></i>
           </div>
         </div>
@@ -565,20 +684,36 @@
           </div>
         </div>
 
-        <!-- Join Channel Overlay (if needed) -->
+        <!-- Join Channel Overlay -->
         <div id="joinOverlay" style="display: none; padding: 20px; text-align: center; background: white; border-top: 1px solid var(--border-color);">
            <p style="margin-bottom: 12px; font-size: 14px; color: var(--text-dim);">Bạn chưa tham gia kênh này</p>
            <button onclick="joinChannelAPI()" style="padding: 10px 24px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;">Tham gia ngay</button>
         </div>
 
+        <!-- Emoji Picker -->
+        <div class="emoji-picker" id="emojiPicker">
+          ${['😀','😂','😍','🥰','😎','🤔','😅','🙏','👍','❤️','🔥','🎉','😭','😡','🤣','💯','✨','🎊','👏','🤝','😊','🥳','😴','🤯','💪','🚀','🌟','💬','📸','🎵'].map(e=>`<span class="emoji-btn" onclick="insertEmoji('${e}')">${e}</span>`).join('')}
+        </div>
+
         <div class="input-area" id="messageInputArea" style="display: none;">
           <div class="input-container">
             <div class="action-btns">
-              <i class="fas fa-paperclip"></i>
+              <i class="fas fa-smile" onclick="toggleEmoji()" title="Emoji"></i>
+              <i class="fas fa-image" onclick="document.getElementById('imgUpload').click()" title="Gửi ảnh"></i>
+              <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="sendImage(this)">
             </div>
             <input type="text" id="messageInput" placeholder="Type your message here">
           </div>
           <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+
+        <!-- Members Panel -->
+        <div class="members-panel" id="membersPanel">
+          <div class="members-panel-header">
+            <span>Thành viên <span id="memberCount" style="color:var(--text-dim);font-weight:400;font-size:13px"></span></span>
+            <i class="fas fa-times" onclick="toggleMembersPanel()"></i>
+          </div>
+          <div class="members-list" id="membersList"></div>
         </div>
       </main>
 
@@ -630,164 +765,223 @@
       </aside>
     </div>
 
-    <!-- Scripting -->
     <script>
       let currentSelection = null;
       let channelMap = {};
+      let onlineUsers = new Set();
+      let ws = null;
       const username = localStorage.getItem("username") || "User";
       const userRole = localStorage.getItem("role") || "user";
       const token = localStorage.getItem("token");
 
-      // Avatar helpers
+      // ── Avatar helpers ──────────────────────────────────────────
       const USER_COLORS = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE','#85C1E9'];
-      
       function getUserColor(name) {
-        let hash = 0;
-        for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);
-        return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+        let h = 0; for (let c of name) h = c.charCodeAt(0) + ((h << 5) - h);
+        return USER_COLORS[Math.abs(h) % USER_COLORS.length];
       }
-
-      function getInitials(name) {
-        return name ? name.charAt(0).toUpperCase() : '?';
-      }
-
-      // Channel type → icon + color
+      function getInitials(name) { return name ? name.charAt(0).toUpperCase() : '?'; }
       const CHANNEL_STYLES = {
         public:  { icon: '#', color: '#7ed38c' },
         private: { icon: '🔒', color: '#a78bfa' },
         group:   { icon: '👥', color: '#60a5fa' },
       };
-
-      function getChannelAvatar(ch, size = 56, extraClass = '') {
-        const type = ch.channelType || ch.type || 'public';
-        const style = CHANNEL_STYLES[type] || CHANNEL_STYLES.public;
-        const br = size <= 40 ? '10px' : '16px';
-        return `<div class="item-avatar channel-avatar ${extraClass}" style="width:${size}px;height:${size}px;background:${style.color};border-radius:${br};font-size:${size*0.4}px">${style.icon}</div>`;
+      function getChannelAvatar(ch, size=56) {
+        const s = CHANNEL_STYLES[ch.channelType||ch.type||'public'] || CHANNEL_STYLES.public;
+        const br = size<=40?'10px':'16px';
+        return `<div class="item-avatar channel-avatar" style="width:${size}px;height:${size}px;background:${s.color};border-radius:${br};font-size:${size*0.4}px">${s.icon}</div>`;
+      }
+      function getUserAvatar(uname, size=56) {
+        const isOnline = onlineUsers.has(uname);
+        return `<div style="position:relative;flex-shrink:0">
+          <div class="item-avatar user-avatar" style="width:${size}px;height:${size}px;background:${getUserColor(uname)}">${getInitials(uname)}</div>
+          <span style="position:absolute;bottom:0;right:0;width:${size<=40?8:11}px;height:${size<=40?8:11}px;border-radius:50%;background:${isOnline?'#22c55e':'#d1d5db'};border:2px solid white"></span>
+        </div>`;
       }
 
-      function getUserAvatar(uname, size = 56, extraClass = '') {
-        const color = getUserColor(uname);
-        return `<div class="item-avatar user-avatar ${extraClass}" style="width:${size}px;height:${size}px;background:${color}">${getInitials(uname)}</div>`;
+      // ── WebSocket realtime ───────────────────────────────────────
+      function connectWS() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${proto}://${location.host}/SimpleChatWebSocket/chat`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ type: 'login', username }));
+        };
+
+        ws.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'userlist') {
+            onlineUsers = new Set(data.users ? data.users.split(',').map(u => u.trim()).filter(Boolean) : []);
+            updateOnlineDots();
+          } else if (data.type === 'message') {
+            // Only append if we're viewing that channel
+            if (currentSelection && currentSelection.type === 'channel' &&
+                String(currentSelection.id) === String(data.channelId)) {
+              appendMessage({ sender: data.username, content: data.content, createdAt: new Date().toISOString(), msgType: data.msgType });
+            }
+          }
+        };
+
+        ws.onclose = () => setTimeout(connectWS, 3000); // auto-reconnect
       }
 
+      function updateOnlineDots() {
+        // Re-render online dots in user list
+        document.querySelectorAll("#usersList .chat-item").forEach(item => {
+          const name = item.querySelector(".item-name").innerText;
+          const dot = item.querySelector("[data-online-dot]");
+          if (dot) dot.style.background = onlineUsers.has(name) ? '#22c55e' : '#d1d5db';
+        });
+      }
+
+      // ── Init ────────────────────────────────────────────────────
       window.addEventListener("DOMContentLoaded", () => {
         if (!token) { window.location.replace("login.html"); return; }
-        // Set nav logo initials
         const logo = document.getElementById("navLogo");
         logo.style.background = getUserColor(username);
         logo.innerText = getInitials(username);
         loadConversations();
+        loadPendingCount();
+        connectWS();
+        // Auto-join from admin redirect
+        const pendingCode = localStorage.getItem('pendingJoinCode');
+        if (pendingCode) {
+          localStorage.removeItem('pendingJoinCode');
+          setTimeout(async () => {
+            const res = await fetch('/SimpleChatWebSocket/api/users/channels/join-by-code', {
+              method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+              body: JSON.stringify({ inviteCode: pendingCode })
+            });
+            const d = await res.json();
+            if (d.channelId) {
+              await loadConversations();
+              // Find and click the channel
+              document.querySelectorAll('#channelsList .chat-item').forEach(item => {
+                const ch = channelMap[item.querySelector('.item-name')?.innerText];
+                if (ch && (ch.channelId||ch.id) == d.channelId) item.click();
+              });
+            }
+          }, 800);
+        }
       });
 
+      // ── Load conversations ───────────────────────────────────────
       async function loadConversations() {
         try {
-          // 1. Fetch Channels
-          const chanRes = await fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }});
+          const [chanRes, friendRes] = await Promise.all([
+            fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }}),
+            fetch("/SimpleChatWebSocket/api/friends", { headers: { Authorization: "Bearer " + token }})
+          ]);
           const chanData = await chanRes.json();
-          
-          // 2. Fetch Users
-          const userRes = await fetch("/SimpleChatWebSocket/api/users", { headers: { Authorization: "Bearer " + token }});
-          const userData = await userRes.json();
-          
-          renderConversations(chanData.channels || [], userData.users || []);
-        } catch (err) {
-          console.error("Load fail:", err);
-        }
+          const friendData = await friendRes.json();
+          renderConversations(chanData.channels || [], friendData.friends || []);
+        } catch (err) { console.error("Load fail:", err); }
+      }
+
+      function filterConversations(query) {
+        const q = query.toLowerCase().trim();
+        ['#channelsList','#usersList'].forEach(sel => {
+          document.querySelectorAll(sel + " .chat-item").forEach(item => {
+            const name = item.querySelector(".item-name").innerText.toLowerCase();
+            item.style.display = (!q || name.includes(q)) ? "" : "none";
+          });
+        });
+        if (q) ['sectionChannels','sectionUsers'].forEach(id => {
+          const b = document.getElementById(id);
+          if (b.classList.contains('collapsed')) {
+            b.classList.remove('collapsed');
+            b.previousElementSibling.querySelector('.section-toggle').classList.remove('collapsed');
+          }
+        });
       }
 
       function toggleSection(id, header) {
         const body = document.getElementById(id);
         const icon = header.querySelector('.section-toggle');
-        const collapsed = body.classList.toggle('collapsed');
-        icon.classList.toggle('collapsed', collapsed);
+        icon.classList.toggle('collapsed', body.classList.toggle('collapsed'));
       }
 
-      function renderConversations(channels, users) {
-        // --- Channels ---
+      function renderConversations(channels, friends) {
+        // Channels
         const chList = document.getElementById("channelsList");
-        chList.innerHTML = "";
-        if (channels.length === 0) {
-          chList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có nhóm nào</div>';
-        }
+        chList.innerHTML = channels.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có nhóm nào</div>';
         channels.forEach(ch => {
           const chId = ch.channelId || ch.id;
           const chName = ch.channelName || ch.name;
           channelMap[chName] = ch;
-
           const item = document.createElement("div");
           item.className = "chat-item";
-          item.innerHTML = `
-            ${getChannelAvatar(ch)}
-            <div class="item-info">
-              <div class="item-top">
-                <span class="item-name">${chName}</span>
-                <span class="item-time">5m ago</span>
-              </div>
-              <div class="item-msg">${ch.description || "Nhấn để xem tin nhắn"}</div>
-            </div>
-          `;
+          item.innerHTML = `${getChannelAvatar(ch)}<div class="item-info"><div class="item-top"><span class="item-name">${chName}</span><span class="item-time">5m ago</span></div><div class="item-msg">${ch.description||'Nhấn để xem tin nhắn'}</div></div>`;
           item.onclick = () => selectConversation(chName, chId, 'channel', item, ch);
           chList.appendChild(item);
         });
 
-        // --- Users ---
+        // Users (friends only, exclude admin + self)
         const uList = document.getElementById("usersList");
-        uList.innerHTML = "";
-        const otherUsers = users.filter(u => u.username !== username);
-        if (otherUsers.length === 0) {
-          uList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có bạn bè</div>';
-        }
-        otherUsers.forEach(user => {
+        const others = friends.filter(f => f.username !== username);
+        uList.innerHTML = others.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có bạn bè — tìm kiếm để kết bạn</div>';
+        others.forEach(friend => {
           const item = document.createElement("div");
           item.className = "chat-item";
-          item.innerHTML = `
-            ${getUserAvatar(user.username)}
-            <div class="item-info">
-              <div class="item-top">
-                <span class="item-name">${user.username}</span>
-                <span class="item-time">2h ago</span>
-              </div>
-              <div class="item-msg">${user.fullName || 'Nhấn để nhắn tin'}</div>
-            </div>
-          `;
-          item.onclick = () => selectConversation(user.username, null, 'dm', item, null);
+          item.innerHTML = `${getUserAvatar(friend.username)}<div class="item-info"><div class="item-top"><span class="item-name">${friend.username}</span><span class="item-time"></span></div><div class="item-msg">${friend.fullName||'Nhấn để nhắn tin'}</div></div>`;
+          item.onclick = () => selectConversation(friend.username, null, 'dm', item, null);
           uList.appendChild(item);
         });
 
-        // --- Pending (placeholder, có thể mở rộng sau) ---
-        const pList = document.getElementById("pendingList");
-        pList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Không có tin nhắn chờ</div>';
+        // Pending placeholder
+        document.getElementById("pendingList").innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Không có tin nhắn chờ</div>';
       }
 
+      // ── Select conversation ──────────────────────────────────────
       function selectConversation(name, id, type, element, chData) {
         currentSelection = { name, id, type };
-        
         document.querySelectorAll(".chat-item").forEach(i => i.classList.remove("active"));
         element.classList.add("active");
-
         document.getElementById("currentChatName").innerText = name;
 
-        // Header avatar
-        const headerAvatarEl = document.getElementById("headerAvatar");
+        const headerEl = document.getElementById("headerAvatar");
         if (type === 'channel') {
           const ch = chData || channelMap[name] || {};
-          const style = CHANNEL_STYLES[ch.channelType || ch.type || 'public'] || CHANNEL_STYLES.public;
-          headerAvatarEl.className = "header-avatar channel-avatar";
-          headerAvatarEl.style.background = style.color;
-          headerAvatarEl.innerHTML = style.icon;
+          const s = CHANNEL_STYLES[ch.channelType||ch.type||'public'] || CHANNEL_STYLES.public;
+          headerEl.className = "header-avatar channel-avatar";
+          headerEl.style.cssText = `background:${s.color};border-radius:14px;font-size:22px`;
+          headerEl.innerHTML = s.icon;
+          document.getElementById("btnMembers").style.display = "";
+          document.getElementById("btnInvite").style.display = "";
+          document.getElementById('btnRemoveFriend')?.remove();
+          // Show settings only for owner/moderator
+          const myRole = (chData || channelMap[name] || {}).myRole;
+          document.getElementById("btnGroupSettings").style.display = (myRole === 'owner') ? "" : "none";
+          document.getElementById("headerStatus").innerText = (ch.channelType||'public') + ' · ' + (ch.memberCount||0) + ' thành viên';
         } else {
-          headerAvatarEl.className = "header-avatar";
-          headerAvatarEl.style.background = getUserColor(name);
-          headerAvatarEl.style.borderRadius = "50%";
-          headerAvatarEl.innerHTML = getInitials(name);
+          headerEl.className = "header-avatar";
+          headerEl.style.cssText = `background:${getUserColor(name)};border-radius:50%;font-size:18px;font-weight:700;color:white`;
+          headerEl.innerHTML = getInitials(name);
+          document.getElementById("btnMembers").style.display = "none";
+          document.getElementById("btnInvite").style.display = "none";
+          document.getElementById("btnGroupSettings").style.display = "none";
+          document.getElementById("membersPanel").classList.remove("open");
+          const isOnline = onlineUsers.has(name);
+          document.getElementById("headerStatus").innerHTML = isOnline
+            ? `<span style="color:#22c55e">● Online</span>`
+            : 'Offline';
+          // Show remove friend btn if friends
+          const existingRemoveBtn = document.getElementById('btnRemoveFriend');
+          if (existingRemoveBtn) existingRemoveBtn.remove();
+          const actionsEl = document.querySelector('.header-actions');
+          const removeBtn = document.createElement('i');
+          removeBtn.id = 'btnRemoveFriend';
+          removeBtn.className = 'fas fa-user-minus';
+          removeBtn.title = 'Xóa bạn bè';
+          removeBtn.style.cssText = 'cursor:pointer;color:#ef4444';
+          removeBtn.onclick = () => removeFriend(name);
+          actionsEl.insertBefore(removeBtn, actionsEl.firstChild);
         }
-
-        document.getElementById("headerStatus").innerText = type === 'channel' ? 'Public Channel' : 'Last seen 2 hours ago';
 
         if (type === 'channel') {
           const ch = chData || channelMap[name];
-          const isMember = (ch && ch.isMember) || userRole.toLowerCase() === 'admin';
-          
+          const isMember = (ch && ch.isMember) || userRole === 'admin';
           if (isMember) {
             document.getElementById("joinOverlay").style.display = "none";
             document.getElementById("messageInputArea").style.display = "flex";
@@ -795,12 +989,7 @@
           } else {
             document.getElementById("joinOverlay").style.display = "block";
             document.getElementById("messageInputArea").style.display = "none";
-            document.getElementById("messagesArea").innerHTML = `
-              <div class="empty-chat">
-                <i class="fas fa-lock"></i>
-                <h3>Private Content</h3>
-                <p>Bạn cần tham gia kênh #${name} để xem tin nhắn và trò chuyện.</p>
-              </div>`;
+            document.getElementById("messagesArea").innerHTML = `<div class="empty-chat"><i class="fas fa-lock"></i><h3>Private Content</h3><p>Bạn cần tham gia kênh #${name} để xem tin nhắn.</p></div>`;
           }
         } else {
           document.getElementById("joinOverlay").style.display = "none";
@@ -809,52 +998,90 @@
         }
       }
 
+      // ── Members panel ────────────────────────────────────────────
+      function toggleMembersPanel() {
+        const panel = document.getElementById("membersPanel");
+        const isOpen = panel.classList.toggle("open");
+        if (isOpen && currentSelection?.type === 'channel') loadMembers(currentSelection.id);
+      }
+
+      async function loadMembers(channelId) {
+        const list = document.getElementById("membersList");
+        list.innerHTML = '<div style="padding:16px;color:var(--text-dim);font-size:13px">Đang tải...</div>';
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${channelId}/members`, { headers: { Authorization: "Bearer " + token }});
+          const data = await res.json();
+          const members = data.members || [];
+          document.getElementById("memberCount").innerText = `(${members.length})`;
+          list.innerHTML = members.map(m => {
+            const isOnline = onlineUsers.has(m.username);
+            const badgeClass = m.role === 'owner' ? 'owner' : m.role === 'moderator' ? 'moderator' : '';
+            return `<div class="member-item">
+              ${getUserAvatar(m.username, 36)}
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:13px">${m.username} ${isOnline?'<span style="color:#22c55e;font-size:11px">● online</span>':''}</div>
+                <div style="font-size:11px;color:var(--text-dim)">${m.fullName||''}</div>
+              </div>
+              ${m.role!=='member'?`<span class="role-badge ${badgeClass}">${m.role}</span>`:''}
+            </div>`;
+          }).join('');
+        } catch(e) { list.innerHTML = '<div style="padding:16px;color:red;font-size:13px">Lỗi tải thành viên</div>'; }
+      }
+
+      // ── Load & render messages ───────────────────────────────────
       async function loadMessages(target, type) {
         const area = document.getElementById("messagesArea");
-        area.innerHTML = '<div style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-        
-        let url = type === 'channel' 
+        area.innerHTML = '<div style="text-align:center;padding:40px"><i class="fas fa-spinner fa-spin"></i></div>';
+        const url = type === 'channel'
           ? `/SimpleChatWebSocket/api/users/channels/${target}/messages?page=0&size=100`
           : `/SimpleChatWebSocket/api/users/dm/${target}?sender=${username}`;
-
         try {
           const res = await fetch(url, { headers: { Authorization: "Bearer " + token }});
           const data = await res.json();
           renderMessages(data.messages || []);
-        } catch (err) {
-          console.error("Load error:", err);
-          area.innerHTML = '<div style="text-align:center; padding: 40px; color: red;">Error loading messages</div>';
-        }
+        } catch(err) { area.innerHTML = '<div style="text-align:center;padding:40px;color:red">Lỗi tải tin nhắn</div>'; }
       }
 
       function renderMessages(messages) {
         const area = document.getElementById("messagesArea");
         area.innerHTML = "";
-        
-        if (messages.length === 0) {
-          area.innerHTML = '<div class="empty-chat"><i class="fas fa-history"></i><h3>No History</h3><p>Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện!</p></div>';
+        if (!messages.length) {
+          area.innerHTML = '<div class="empty-chat"><i class="fas fa-history"></i><h3>No History</h3><p>Hãy gửi tin nhắn đầu tiên!</p></div>';
           return;
         }
-
-        messages.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)).forEach(msg => {
-          const isOwn = msg.sender === username;
-          const group = document.createElement("div");
-          group.className = `message-group ${isOwn ? 'own' : 'other'}`;
-          
-          group.innerHTML = `
-            ${!isOwn ? `<div class="msg-avatar" style="background:${getUserColor(msg.sender)}">${getInitials(msg.sender)}</div>` : ''}
-            <div class="msg-content">
-              <div class="bubble">${msg.content}</div>
-              <div class="msg-meta">
-                ${new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-              </div>
-            </div>
-          `;
-          area.appendChild(group);
-        });
+        messages.sort((a,b) => new Date(a.createdAt)-new Date(b.createdAt)).forEach(msg => appendMessage(msg));
         area.scrollTop = area.scrollHeight;
       }
 
+      function appendMessage(msg) {
+        const area = document.getElementById("messagesArea");
+        // Remove empty state if present
+        const empty = area.querySelector('.empty-chat');
+        if (empty) empty.remove();
+
+        const isOwn = msg.sender === username;
+        const group = document.createElement("div");
+        group.className = `message-group ${isOwn ? 'own' : 'other'}`;
+
+        let bubbleContent = '';
+        if (msg.msgType === 'image' || (msg.content && msg.content.startsWith('data:image'))) {
+          bubbleContent = `<img src="${msg.content}" alt="image" onclick="window.open(this.src)">`;
+        } else {
+          bubbleContent = msg.content;
+        }
+
+        group.innerHTML = `
+          ${!isOwn ? `<div class="msg-avatar" style="background:${getUserColor(msg.sender)}">${getInitials(msg.sender)}</div>` : ''}
+          <div class="msg-content">
+            ${!isOwn ? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:2px">${msg.sender}</div>` : ''}
+            <div class="bubble">${bubbleContent}</div>
+            <div class="msg-meta">${new Date(msg.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>`;
+        area.appendChild(group);
+        area.scrollTop = area.scrollHeight;
+      }
+
+      // ── Send message ─────────────────────────────────────────────
       function sendMessage() {
         const input = document.getElementById("messageInput");
         const content = input.value.trim();
@@ -863,7 +1090,6 @@
         const body = currentSelection.type === 'channel'
           ? { channelId: currentSelection.id, content }
           : { senderUsername: username, recipientUsername: currentSelection.name, content };
-
         const url = currentSelection.type === 'channel' ? "/SimpleChatWebSocket/api/users/messages" : "/SimpleChatWebSocket/api/users/dm";
 
         fetch(url, {
@@ -873,10 +1099,59 @@
         }).then(res => {
           if (res.ok) {
             input.value = "";
-            loadMessages(currentSelection.type === 'channel' ? currentSelection.id : currentSelection.name, currentSelection.type);
+            // Broadcast via WS so other clients get it
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'message', username, content, channelId: currentSelection.id, msgType: 'text' }));
+            }
+            // Append locally immediately
+            appendMessage({ sender: username, content, createdAt: new Date().toISOString() });
           }
         });
       }
+
+      // ── Send image ───────────────────────────────────────────────
+      function sendImage(input) {
+        const file = input.files[0];
+        if (!file || !currentSelection) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          const body = currentSelection.type === 'channel'
+            ? { channelId: currentSelection.id, content: dataUrl }
+            : { senderUsername: username, recipientUsername: currentSelection.name, content: dataUrl };
+          const url = currentSelection.type === 'channel' ? "/SimpleChatWebSocket/api/users/messages" : "/SimpleChatWebSocket/api/users/dm";
+          fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify(body)
+          }).then(res => {
+            if (res.ok) {
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'message', username, content: dataUrl, channelId: currentSelection.id, msgType: 'image' }));
+              }
+              appendMessage({ sender: username, content: dataUrl, createdAt: new Date().toISOString(), msgType: 'image' });
+            }
+          });
+        };
+        reader.readAsDataURL(file);
+        input.value = "";
+      }
+
+      // ── Emoji ────────────────────────────────────────────────────
+      function toggleEmoji() {
+        document.getElementById("emojiPicker").classList.toggle("open");
+      }
+      function insertEmoji(emoji) {
+        const input = document.getElementById("messageInput");
+        input.value += emoji;
+        input.focus();
+        document.getElementById("emojiPicker").classList.remove("open");
+      }
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#emojiPicker") && !e.target.closest(".fa-smile")) {
+          document.getElementById("emojiPicker").classList.remove("open");
+        }
+      });
 
       document.getElementById("messageInput").onkeypress = (e) => { if (e.key === "Enter") sendMessage(); };
 
@@ -884,20 +1159,429 @@
         if (!currentSelection || currentSelection.type !== 'channel') return;
         try {
           const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${currentSelection.id}/join`, {
-            method: "POST",
-            headers: { Authorization: "Bearer " + token }
+            method: "POST", headers: { Authorization: "Bearer " + token }
           });
           const data = await res.json();
           alert(data.message);
-          // Refresh
           const chanRes = await fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }});
           const chanData = await chanRes.json();
-          channelMap[currentSelection.name] = chanData.channels.find(c => (c.channelId || c.id) == currentSelection.id);
-          selectConversation(currentSelection.name, currentSelection.id, 'channel', document.querySelector(".chat-item.active"));
-        } catch (err) { alert("Error joining channel"); }
+          channelMap[currentSelection.name] = chanData.channels.find(c => (c.channelId||c.id) == currentSelection.id);
+          selectConversation(currentSelection.name, currentSelection.id, 'channel', document.querySelector(".chat-item.active"), channelMap[currentSelection.name]);
+        } catch(err) { alert("Error joining channel"); }
+      }
+
+      // ── Friend features ──────────────────────────────────────────
+      let searchTimer = null;
+
+      function onSearchInput(val) {
+        filterConversations(val); // filter existing list
+        clearTimeout(searchTimer);
+        const results = document.getElementById('searchResults');
+        if (val.trim().length < 2) { results.classList.remove('open'); return; }
+        searchTimer = setTimeout(() => searchUsers(val.trim()), 350);
+      }
+
+      async function searchUsers(q) {
+        const results = document.getElementById('searchResults');
+        results.innerHTML = '<div style="padding:12px 16px;color:var(--text-dim);font-size:13px">Đang tìm...</div>';
+        results.classList.add('open');
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/friends/search?q=${encodeURIComponent(q)}`, {
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const users = data.users || [];
+          if (!users.length) {
+            results.innerHTML = '<div style="padding:12px 16px;color:var(--text-dim);font-size:13px">Không tìm thấy</div>';
+            return;
+          }
+          results.innerHTML = users.map(u => {
+            let btn = '';
+            if (u.friendStatus === 'accepted')
+              btn = `<button class="friend-action-btn btn-msg" onclick="event.stopPropagation();startDM('${u.username}')">💬 Nhắn tin</button>`;
+            else if (u.friendStatus === 'pending')
+              btn = `<button class="friend-action-btn btn-pending">⏳ Chờ xác nhận</button>`;
+            else
+              btn = `<button class="friend-action-btn btn-add-friend" onclick="event.stopPropagation();sendFriendRequest('${u.username}',this)">➕ Kết bạn</button>`;
+            return `<div class="search-result-item" onclick="startDM('${u.username}')">
+              ${getUserAvatar(u.username, 36)}
+              <div style="flex:1"><div style="font-weight:600;font-size:13px">${u.username}</div><div style="font-size:11px;color:var(--text-dim)">${u.fullName}</div></div>
+              ${btn}
+            </div>`;
+          }).join('');
+        } catch(e) {
+          results.innerHTML = '<div style="padding:12px 16px;color:red;font-size:13px">Lỗi tìm kiếm</div>';
+        }
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-box'))
+          document.getElementById('searchResults').classList.remove('open');
+      });
+
+      async function sendFriendRequest(username, btn) {
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/friends/request/${username}`, {
+            method: 'POST', headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            btn.className = 'friend-action-btn btn-pending';
+            btn.innerText = '⏳ Chờ xác nhận';
+            btn.onclick = null;
+          }
+          alert(data.message);
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      async function loadPendingFriends() {
+        const list = document.getElementById('pendingFriendsList');
+        list.innerHTML = '<div style="padding:12px;color:var(--text-dim)">Đang tải...</div>';
+        try {
+          const res = await fetch('/SimpleChatWebSocket/api/friends/pending', {
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const pending = data.pending || [];
+          // Update badge
+          const badge = document.getElementById('pendingFriendCount');
+          if (pending.length > 0) { badge.style.display = 'flex'; badge.innerText = pending.length; }
+          else badge.style.display = 'none';
+
+          if (!pending.length) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim)">Không có lời mời nào</div>';
+            return;
+          }
+          list.innerHTML = pending.map(f => `
+            <div class="pending-item" id="fi_${f.friendshipId}">
+              ${getUserAvatar(f.username, 40)}
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:14px">${f.username}</div>
+                <div style="font-size:11px;color:var(--text-dim)">${f.fullName}</div>
+              </div>
+              <button class="btn-approve" onclick="respondFriend(${f.friendshipId},'accept')">✓ Chấp nhận</button>
+              <button class="btn-reject" onclick="respondFriend(${f.friendshipId},'reject')">✗</button>
+            </div>`).join('');
+        } catch(e) { list.innerHTML = '<div style="padding:12px;color:red">Lỗi</div>'; }
+      }
+
+      async function respondFriend(friendshipId, action) {
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/friends/respond/${friendshipId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ action })
+          });
+          const data = await res.json();
+          document.getElementById('fi_' + friendshipId)?.remove();
+          if (action === 'accept') loadConversations(); // refresh friend list
+          alert(data.message);
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      async function removeFriend(username) {
+        if (!confirm(`Xóa ${username} khỏi danh sách bạn bè?`)) return;
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/friends/${username}`, {
+            method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          alert(data.message);
+          loadConversations();
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      function startDM(uname) {
+        document.getElementById('searchResults').classList.remove('open');
+        document.getElementById('searchInput').value = '';
+        // Find or click the DM item
+        const items = document.querySelectorAll('#usersList .chat-item');
+        for (const item of items) {
+          if (item.querySelector('.item-name')?.innerText === uname) {
+            item.click(); return;
+          }
+        }
+        // Not in list yet, open DM directly
+        selectConversation(uname, null, 'dm', { classList: { add: ()=>{}, remove: ()=>{} }, querySelector: ()=>null }, null);
+      }
+
+      // Load pending count on init
+      async function loadPendingCount() {
+        try {
+          const res = await fetch('/SimpleChatWebSocket/api/friends/pending', { headers: { Authorization: 'Bearer ' + token }});
+          const data = await res.json();
+          const count = (data.pending || []).length;
+          const badge = document.getElementById('pendingFriendCount');
+          if (count > 0) { badge.style.display = 'flex'; badge.innerText = count; }
+        } catch(e) {}
+      }
+
+      // ── Group management ─────────────────────────────────────────
+      let currentInviteCode = '';
+      let currentChannelData = null;
+
+      function openModal(id) { document.getElementById(id).classList.add('open'); }
+      function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+      function toggleFabMenu() {
+        const menu = document.getElementById('fabMenu');
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      }
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#fabBtn') && !e.target.closest('#fabMenu'))
+          document.getElementById('fabMenu').style.display = 'none';
+      });
+
+      async function createGroup() {
+        const name = document.getElementById('newGroupName').value.trim();
+        const desc = document.getElementById('newGroupDesc').value.trim();
+        const type = document.getElementById('newGroupType').value;
+        const autoApprove = document.getElementById('newGroupAutoApprove').checked;
+        if (!name) { alert('Vui lòng nhập tên nhóm'); return; }
+        try {
+          const res = await fetch('/SimpleChatWebSocket/api/users/channels', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ channelName: name, description: desc, channelType: type, autoApprove })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            closeModal('createGroupModal');
+            currentInviteCode = data.inviteCode;
+            document.getElementById('displayInviteCode').innerText = data.inviteCode;
+            openModal('inviteCodeModal');
+            document.getElementById('newGroupName').value = '';
+            document.getElementById('newGroupDesc').value = '';
+          } else { alert(data.message || 'Lỗi tạo nhóm'); }
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      async function joinByCode() {
+        const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+        if (!code) { alert('Vui lòng nhập mã mời'); return; }
+        try {
+          const res = await fetch('/SimpleChatWebSocket/api/users/channels/join-by-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ inviteCode: code })
+          });
+          const data = await res.json();
+          closeModal('joinCodeModal');
+          document.getElementById('joinCodeInput').value = '';
+          if (data.status === 'pending') {
+            alert('✅ Yêu cầu đã gửi! Chờ owner duyệt.');
+          } else if (res.ok) {
+            alert('✅ Tham gia nhóm thành công!');
+            loadConversations();
+          } else { alert(data.message || 'Lỗi'); }
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      function copyInviteCode() {
+        const code = currentInviteCode || document.getElementById('displayInviteCode').innerText;
+        navigator.clipboard.writeText(code).then(() => alert('Đã copy mã: ' + code));
+      }
+
+      function openInviteModal() {
+        if (!currentSelection || currentSelection.type !== 'channel') return;
+        const ch = channelMap[currentSelection.name] || {};
+        currentInviteCode = ch.inviteCode || '';
+        document.getElementById('modalInviteCode').innerText = ch.inviteCode || '(không có)';
+        openModal('inviteMemberModal');
+      }
+
+      async function inviteMember() {
+        const uname = document.getElementById('inviteUsername').value.trim();
+        if (!uname) { alert('Nhập username cần mời'); return; }
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${currentSelection.id}/invite`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ username: uname })
+          });
+          const data = await res.json();
+          alert(data.message);
+          document.getElementById('inviteUsername').value = '';
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      async function loadPendingMembers(channelId) {
+        const list = document.getElementById('pendingMembersList');
+        list.innerHTML = '<div style="padding:12px;color:var(--text-dim)">Đang tải...</div>';
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${channelId}/pending`, {
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const pending = data.pending || [];
+          if (!pending.length) { list.innerHTML = '<div style="padding:12px;color:var(--text-dim);text-align:center">Không có thành viên chờ duyệt</div>'; return; }
+          list.innerHTML = pending.map(m => `
+            <div class="pending-item">
+              ${getUserAvatar(m.username, 36)}
+              <div style="flex:1"><div style="font-weight:600;font-size:13px">${m.username}</div><div style="font-size:11px;color:var(--text-dim)">${m.fullName}</div></div>
+              <button class="btn-approve" onclick="approveMember(${channelId},${m.memberId},'approve',this.closest('.pending-item'))">✓ Duyệt</button>
+              <button class="btn-reject" onclick="approveMember(${channelId},${m.memberId},'reject',this.closest('.pending-item'))">✗</button>
+            </div>`).join('');
+        } catch(e) { list.innerHTML = '<div style="padding:12px;color:red">Lỗi tải dữ liệu</div>'; }
+      }
+
+      async function approveMember(channelId, memberId, action, el) {
+        try {
+          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${channelId}/approve/${memberId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ action })
+          });
+          const data = await res.json();
+          if (res.ok) el.remove();
+          else alert(data.message);
+        } catch(e) { alert('Lỗi: ' + e.message); }
+      }
+
+      function openGroupSettings() {
+        if (!currentSelection || currentSelection.type !== 'channel') return;
+        const ch = channelMap[currentSelection.name] || {};
+        const autoApprove = ch.autoApprove !== false;
+        const toggle = document.getElementById('autoApproveToggle');
+        const slider = document.getElementById('autoApproveSlider');
+        const knob = document.getElementById('autoApproveKnob');
+        toggle.checked = autoApprove;
+        slider.style.background = autoApprove ? 'var(--primary)' : '#d1d5db';
+        knob.style.transform = autoApprove ? 'translateX(20px)' : 'translateX(0)';
+        openModal('groupSettingsModal');
+      }
+
+      async function toggleAutoApprove(val) {
+        const slider = document.getElementById('autoApproveSlider');
+        const knob = document.getElementById('autoApproveKnob');
+        slider.style.background = val ? 'var(--primary)' : '#d1d5db';
+        knob.style.transform = val ? 'translateX(20px)' : 'translateX(0)';
+        try {
+          await fetch(`/SimpleChatWebSocket/api/users/channels/${currentSelection.id}/auto-approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ autoApprove: val })
+          });
+          if (channelMap[currentSelection.name]) channelMap[currentSelection.name].autoApprove = val;
+        } catch(e) { alert('Lỗi: ' + e.message); }
       }
 
       function logout() { if (confirm("Đăng xuất khỏi hệ thống?")) { localStorage.clear(); window.location.href = "login.html"; } }
     </script>
+    <!-- Modal: Lời mời kết bạn chờ xử lý -->
+    <div class="modal-overlay" id="pendingFriendsModal">
+      <div class="modal-box">
+        <h3>👥 Lời mời kết bạn</h3>
+        <div id="pendingFriendsList" style="max-height:340px;overflow-y:auto"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('pendingFriendsModal')">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Tạo nhóm -->
+    <div class="modal-overlay" id="createGroupModal">
+      <div class="modal-box">
+        <h3>✨ Tạo nhóm mới</h3>
+        <div class="modal-field"><label>Tên nhóm *</label><input id="newGroupName" placeholder="Tên nhóm..."></div>
+        <div class="modal-field"><label>Mô tả</label><input id="newGroupDesc" placeholder="Mô tả nhóm..."></div>
+        <div class="modal-field"><label>Loại nhóm</label>
+          <select id="newGroupType">
+            <option value="group">👥 Group (mã mời)</option>
+            <option value="public"># Public (ai cũng vào được)</option>
+            <option value="private">🔒 Private</option>
+          </select>
+        </div>
+        <div class="modal-field" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="newGroupAutoApprove" checked style="width:auto">
+          <label style="margin:0">Tự động duyệt thành viên</label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('createGroupModal')">Hủy</button>
+          <button class="btn-primary" onclick="createGroup()">Tạo nhóm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Vào nhóm bằng mã -->
+    <div class="modal-overlay" id="joinCodeModal">
+      <div class="modal-box">
+        <h3>🔑 Vào nhóm bằng mã mời</h3>
+        <div class="modal-field"><label>Nhập mã mời</label><input id="joinCodeInput" placeholder="VD: AB12CD34" style="text-transform:uppercase;letter-spacing:3px;font-size:18px;font-weight:700;text-align:center"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('joinCodeModal')">Hủy</button>
+          <button class="btn-primary" onclick="joinByCode()">Tham gia</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Mã mời nhóm (sau khi tạo) -->
+    <div class="modal-overlay" id="inviteCodeModal">
+      <div class="modal-box" style="text-align:center">
+        <h3>🎉 Nhóm đã được tạo!</h3>
+        <p style="color:var(--text-dim);font-size:14px;margin-bottom:8px">Chia sẻ mã mời này để mời thành viên</p>
+        <div class="invite-code-box" id="displayInviteCode" onclick="copyInviteCode()" title="Click để copy">XXXXXXXX</div>
+        <p style="font-size:12px;color:var(--text-dim)">Click vào mã để copy</p>
+        <div class="modal-actions" style="justify-content:center">
+          <button class="btn-primary" onclick="closeModal('inviteCodeModal');loadConversations()">Vào nhóm ngay</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Mời thành viên -->
+    <div class="modal-overlay" id="inviteMemberModal">
+      <div class="modal-box">
+        <h3>👤 Mời thành viên</h3>
+        <div style="background:var(--bg-secondary);border-radius:12px;padding:12px 16px;margin-bottom:16px">
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">Mã mời nhóm</div>
+          <div style="font-size:20px;font-weight:700;letter-spacing:3px;color:var(--primary);cursor:pointer" id="modalInviteCode" onclick="copyInviteCode()">------</div>
+        </div>
+        <div class="modal-field"><label>Hoặc mời trực tiếp theo username</label>
+          <div style="display:flex;gap:8px">
+            <input id="inviteUsername" placeholder="username..." style="flex:1">
+            <button class="btn-primary" onclick="inviteMember()" style="white-space:nowrap">Mời</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('inviteMemberModal')">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Duyệt thành viên chờ -->
+    <div class="modal-overlay" id="pendingModal">
+      <div class="modal-box">
+        <h3>⏳ Thành viên chờ duyệt</h3>
+        <div id="pendingMembersList" style="max-height:300px;overflow-y:auto"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('pendingModal')">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Cài đặt nhóm -->
+    <div class="modal-overlay" id="groupSettingsModal">
+      <div class="modal-box">
+        <h3>⚙️ Cài đặt nhóm</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-color)">
+          <div>
+            <div style="font-weight:600;font-size:14px">Tự động duyệt thành viên</div>
+            <div style="font-size:12px;color:var(--text-dim)">Tắt để duyệt thủ công từng người</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+            <input type="checkbox" id="autoApproveToggle" onchange="toggleAutoApprove(this.checked)" style="opacity:0;width:0;height:0">
+            <span id="autoApproveSlider" style="position:absolute;inset:0;background:#d1d5db;border-radius:24px;transition:0.3s"></span>
+            <span id="autoApproveKnob" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:white;border-radius:50%;transition:0.3s"></span>
+          </label>
+        </div>
+        <div style="padding:14px 0;cursor:pointer;display:flex;align-items:center;gap:10px;color:#ef4444" onclick="closeModal('groupSettingsModal');openModal('pendingModal');loadPendingMembers(currentSelection.id)">
+          <i class="fas fa-user-clock"></i> Xem thành viên chờ duyệt
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('groupSettingsModal')">Đóng</button>
+        </div>
+      </div>
+    </div>
+
   </body>
 </html>

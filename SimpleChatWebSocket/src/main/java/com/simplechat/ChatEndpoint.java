@@ -63,11 +63,16 @@ public class ChatEndpoint {
             } else if ("message".equals(type)) {
                 String username = userNames.getOrDefault(session, "Guest");
                 String content = json.get("content").getAsString();
+                String channelId = json.has("channelId") ? json.get("channelId").getAsString() : "global";
+                String msgType = json.has("msgType") ? json.get("msgType").getAsString() : "text";
                 
-                System.out.println("[" + getTime() + "] " + username + ": " + content);
-                
-                // Broadcast tin nhắn
-                broadcastUserMessage(username, content);
+                System.out.println("[" + getTime() + "] " + username + " [ch:" + channelId + "]: " + content);
+                broadcastChannelMessage(username, content, channelId, msgType);
+            } else if ("online".equals(type)) {
+                // broadcast updated online list
+                updateUserList();
+            } else if ("online".equals(type)) {
+                updateUserList();
             }
         } catch (Exception e) {
             System.err.println("Error processing message: " + e.getMessage());
@@ -95,6 +100,21 @@ public class ChatEndpoint {
         throwable.printStackTrace();
         if (session != null) {
             onClose(session);
+        }
+    }
+
+    // Gửi tin nhắn từ user theo channel
+    private void broadcastChannelMessage(String username, String content, String channelId, String msgType) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "message");
+        json.addProperty("username", username);
+        json.addProperty("content", content);
+        json.addProperty("channelId", channelId);
+        json.addProperty("msgType", msgType);
+        json.addProperty("time", getTime());
+        String message = json.toString();
+        for (Session session : snapshotSessions()) {
+            sendIfOpen(session, message, "channel message");
         }
     }
 

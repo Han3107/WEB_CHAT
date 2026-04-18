@@ -21,6 +21,9 @@ public class ChannelMember {
     
     @Column(length = 20)
     private String role; // owner, moderator, member
+
+    @Column(length = 20)
+    private String status = "approved"; // pending, approved
     
     @Column(nullable = false, columnDefinition = "datetime2")
     private LocalDateTime joinedAt = LocalDateTime.now();
@@ -47,6 +50,9 @@ public class ChannelMember {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public LocalDateTime getJoinedAt() { return joinedAt; }
     public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }

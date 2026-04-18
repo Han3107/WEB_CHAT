@@ -36,6 +36,12 @@ public class Channel {
     @Column
     private Integer messageCount = 0;
 
+    @Column(length = 20, unique = true)
+    private String inviteCode;
+
+    @Column
+    private Boolean autoApprove = true;
+
     public Channel() {}
 
     public Channel(String channelName, String channelType, User createdBy) {
@@ -71,4 +77,10 @@ public class Channel {
 
     public Integer getMessageCount() { return messageCount; }
     public void setMessageCount(Integer messageCount) { this.messageCount = messageCount; }
+
+    public String getInviteCode() { return inviteCode; }
+    public void setInviteCode(String inviteCode) { this.inviteCode = inviteCode; }
+
+    public Boolean getAutoApprove() { return autoApprove; }
+    public void setAutoApprove(Boolean autoApprove) { this.autoApprove = autoApprove; }
 }

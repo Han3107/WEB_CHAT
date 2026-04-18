@@ -44,6 +44,8 @@ CREATE TABLE channels (
     is_active BOOLEAN DEFAULT TRUE,
     member_count INT DEFAULT 0,
     message_count INT DEFAULT 0,
+    invite_code VARCHAR(20) UNIQUE,
+    auto_approve BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 CREATE INDEX idx_created_by ON channels(created_by);
@@ -55,6 +57,7 @@ CREATE TABLE channel_members (
     channel_id INT NOT NULL,
     user_id INT NOT NULL,
     role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('owner', 'moderator', 'member')),
+    status VARCHAR(20) DEFAULT 'approved' CHECK (status IN ('pending', 'approved')),
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_read_at TIMESTAMP NULL,
     UNIQUE (channel_id, user_id),
@@ -158,6 +161,22 @@ CREATE INDEX idx_user_log ON activity_logs(user_id);
 CREATE INDEX idx_action_log ON activity_logs(action);
 CREATE INDEX idx_created_at_log ON activity_logs(created_at DESC);
 
+-- BANG FRIENDSHIPS
+CREATE TABLE friendships (
+    friendship_id SERIAL PRIMARY KEY,
+    requester_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'blocked')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (requester_id, receiver_id),
+    FOREIGN KEY (requester_id) REFERENCES users(user_id),
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id)
+);
+CREATE INDEX idx_requester ON friendships(requester_id);
+CREATE INDEX idx_receiver ON friendships(receiver_id);
+CREATE INDEX idx_friendship_status ON friendships(status);
+
 -- BANG SYSTEM_SETTINGS
 CREATE TABLE system_settings (
     setting_id SERIAL PRIMARY KEY,
@@ -249,20 +268,20 @@ INSERT INTO role_permissions (role, permission_id) VALUES
 ('user', 1), ('user', 2);
 
 -- INSERT DEMO CHANNELS
-INSERT INTO channels (channel_name, description, channel_type, created_by) VALUES
-('general', 'Kenh chung cho tat ca', 'public', 1),
-('random', 'Chat tu do', 'public', 1),
-('tech', 'Thao luan technology', 'group', 1),
-('work', 'Cong viec', 'private', 1),
-('admin', 'Kenh rieng admin', 'private', 1);
+INSERT INTO channels (channel_name, description, channel_type, created_by, invite_code, auto_approve) VALUES
+('general', 'Kenh chung cho tat ca', 'public', 1, 'GEN00001', true),
+('random', 'Chat tu do', 'public', 1, 'RAN00002', true),
+('tech', 'Thao luan technology', 'group', 1, 'TEC00003', true),
+('work', 'Cong viec', 'private', 1, 'WRK00004', false),
+('admin', 'Kenh rieng admin', 'private', 1, 'ADM00005', false);
 
 -- INSERT CHANNEL MEMBERS
-INSERT INTO channel_members (channel_id, user_id, role) VALUES
-(1, 1, 'owner'), (1, 2, 'member'), (1, 3, 'member'), (1, 4, 'moderator'), (1, 5, 'member'),
-(2, 1, 'owner'), (2, 2, 'member'), (2, 3, 'member'), (2, 4, 'member'), (2, 5, 'member'), (2, 6, 'member'), (2, 7, 'member'),
-(3, 1, 'owner'), (3, 4, 'moderator'), (3, 2, 'member'), (3, 5, 'member'),
-(4, 1, 'owner'), (4, 2, 'member'),
-(5, 1, 'owner'), (5, 4, 'member');
+INSERT INTO channel_members (channel_id, user_id, role, status) VALUES
+(1, 1, 'owner', 'approved'), (1, 2, 'member', 'approved'), (1, 3, 'member', 'approved'), (1, 4, 'moderator', 'approved'), (1, 5, 'member', 'approved'),
+(2, 1, 'owner', 'approved'), (2, 2, 'member', 'approved'), (2, 3, 'member', 'approved'), (2, 4, 'member', 'approved'), (2, 5, 'member', 'approved'), (2, 6, 'member', 'approved'), (2, 7, 'member', 'approved'),
+(3, 1, 'owner', 'approved'), (3, 4, 'moderator', 'approved'), (3, 2, 'member', 'approved'), (3, 5, 'member', 'approved'),
+(4, 1, 'owner', 'approved'), (4, 2, 'member', 'approved'),
+(5, 1, 'owner', 'approved'), (5, 4, 'member', 'approved');
 
 -- INSERT DEMO MESSAGES
 INSERT INTO messages (channel_id, user_id, content, message_type) VALUES

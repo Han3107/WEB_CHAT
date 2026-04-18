@@ -13,7 +13,8 @@ public interface ChannelMemberRepository extends JpaRepository<ChannelMember, In
     List<ChannelMember> findByChannel_ChannelId(Integer channelId);
     List<ChannelMember> findByUser_UserId(Integer userId);
     Optional<ChannelMember> findByChannel_ChannelIdAndUser_UserId(Integer channelId, Integer userId);
-    
-    @Query("SELECT COUNT(cm) FROM ChannelMember cm WHERE cm.channel.channelId = :channelId")
+    List<ChannelMember> findByChannel_ChannelIdAndStatus(Integer channelId, String status);
+
+    @Query("SELECT COUNT(cm) FROM ChannelMember cm WHERE cm.channel.channelId = :channelId AND cm.status = 'approved'")
     Integer countMembersByChannel(@Param("channelId") Integer channelId);
 }

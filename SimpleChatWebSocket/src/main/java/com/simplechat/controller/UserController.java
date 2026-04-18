@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.simplechat.dto.LoginResponse;
 import com.simplechat.entity.Channel;
+import com.simplechat.entity.ChannelMember;
 import com.simplechat.entity.Message;
 import com.simplechat.entity.User;
 import com.simplechat.repository.ChannelMemberRepository;
@@ -132,24 +133,25 @@ public class UserController extends BaseController {
                     .count();
                 channelMap.put("messageCount", realMessageCount);
                 
-                // Check if current user is member
+                // Check if current user is member (approved only)
                 boolean isMember = false;
                 if (user != null) {
-                    isMember = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(
-                        channel.getChannelId(), user.getUserId()).isPresent();
-                    
-                    // Admin always has access
+                    var membership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(
+                        channel.getChannelId(), user.getUserId());
+                    isMember = membership.isPresent() && "approved".equals(membership.get().getStatus());
                     String roleStr = user.getRole();
-                    if (roleStr != null && roleStr.equalsIgnoreCase("admin")) {
-                        isMember = true;
-                    }
+                    if (roleStr != null && roleStr.equalsIgnoreCase("admin")) isMember = true;
                 }
-                
-                System.out.println("[DEBUG] Channel #" + channel.getChannelId() + " (" + channel.getChannelName() + 
-                                   ") for user: " + (user != null ? (user.getUsername() + " [Role=" + user.getRole() + "]") : "GUEST") + 
-                                   ", isMember=" + isMember);
-                
                 channelMap.put("isMember", isMember);
+                // expose invite code and autoApprove to owner
+                if (user != null) {
+                    var membership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channel.getChannelId(), user.getUserId());
+                    if (membership.isPresent() && "owner".equals(membership.get().getRole())) {
+                        channelMap.put("inviteCode", channel.getInviteCode());
+                        channelMap.put("autoApprove", channel.getAutoApprove());
+                    }
+                    if (membership.isPresent()) channelMap.put("myRole", membership.get().getRole());
+                }
 
                 channelMap.put("isActive", channel.getIsActive());
                 channelMap.put("createdAt", channel.getCreatedAt());
@@ -284,22 +286,204 @@ public class UserController extends BaseController {
     }
     
     /**
-     * Tạo channel mới
+     * Tạo channel mới (user)
      * POST /api/users/channels
      */
     @PostMapping("/channels")
-    public ResponseEntity<?> createChannel(@RequestBody Map<String, String> channelData) {
-        ResponseEntity<?> permCheck = requirePermission(Permission.USER_CREATE_CHANNEL);
-        if (permCheck != null) return permCheck;
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Channel đã được tạo thành công");
-        response.put("id", 4);
-        response.put("name", channelData.get("name"));
-        response.put("description", channelData.get("description"));
-        response.put("createdBy", getCurrentUser().getUsername());
-        response.put("createdAt", System.currentTimeMillis());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<?> createChannel(@RequestBody Map<String, Object> channelData) {
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+        try {
+            LoginResponse currentUser = getCurrentUser();
+            User user = userRepository.findByUsername(currentUser.getUsername()).orElse(null);
+            if (user == null) return ResponseEntity.status(404).body(Map.of("error", true, "message", "User không tồn tại"));
+
+            String name = (String) channelData.get("channelName");
+            String desc = (String) channelData.getOrDefault("description", "");
+            String type = (String) channelData.getOrDefault("channelType", "group");
+            boolean autoApprove = channelData.get("autoApprove") == null || Boolean.parseBoolean(channelData.get("autoApprove").toString());
+
+            if (name == null || name.trim().isEmpty())
+                return ResponseEntity.badRequest().body(Map.of("error", true, "message", "Tên nhóm không được để trống"));
+
+            // Generate unique invite code
+            String inviteCode = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+            Channel channel = new Channel(name.trim(), type, user);
+            channel.setDescription(desc);
+            channel.setIsActive(true);
+            channel.setInviteCode(inviteCode);
+            channel.setAutoApprove(autoApprove);
+            channelRepository.save(channel);
+
+            // Add creator as owner
+            ChannelMember cm = new ChannelMember(channel, user, "owner");
+            cm.setStatus("approved");
+            channelMemberRepository.save(cm);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "message", "Tạo nhóm thành công",
+                "channelId", channel.getChannelId(),
+                "channelName", channel.getChannelName(),
+                "inviteCode", inviteCode
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Vào nhóm theo mã mời
+     * POST /api/users/channels/join-by-code
+     */
+    @PostMapping("/channels/join-by-code")
+    public ResponseEntity<?> joinByCode(@RequestBody Map<String, String> body) {
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+        try {
+            String code = body.get("inviteCode");
+            if (code == null || code.trim().isEmpty())
+                return ResponseEntity.badRequest().body(Map.of("error", true, "message", "Thiếu mã mời"));
+
+            Channel channel = channelRepository.findByInviteCode(code.trim().toUpperCase()).orElse(null);
+            if (channel == null)
+                return ResponseEntity.status(404).body(Map.of("error", true, "message", "Mã mời không hợp lệ"));
+
+            User user = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
+            if (user == null) return ResponseEntity.status(404).body(Map.of("error", true, "message", "User không tồn tại"));
+
+            // Already member?
+            if (channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channel.getChannelId(), user.getUserId()).isPresent())
+                return ResponseEntity.ok(Map.of("message", "Bạn đã là thành viên của nhóm này", "channelId", channel.getChannelId()));
+
+            String status = Boolean.TRUE.equals(channel.getAutoApprove()) ? "approved" : "pending";
+            ChannelMember cm = new ChannelMember(channel, user, "member");
+            cm.setStatus(status);
+            channelMemberRepository.save(cm);
+
+            if ("pending".equals(status))
+                return ResponseEntity.ok(Map.of("message", "Yêu cầu tham gia đã được gửi, chờ duyệt", "status", "pending", "channelId", channel.getChannelId()));
+
+            return ResponseEntity.ok(Map.of("message", "Tham gia nhóm thành công", "status", "approved", "channelId", channel.getChannelId(), "channelName", channel.getChannelName()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Lấy danh sách thành viên chờ duyệt
+     * GET /api/users/channels/{channelId}/pending
+     */
+    @GetMapping("/channels/{channelId}/pending")
+    public ResponseEntity<?> getPendingMembers(@PathVariable int channelId) {
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+        try {
+            User user = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
+            ChannelMember myMembership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).orElse(null);
+            if (myMembership == null || (!myMembership.getRole().equals("owner") && !myMembership.getRole().equals("moderator")))
+                return ResponseEntity.status(403).body(Map.of("error", true, "message", "Bạn không có quyền xem danh sách chờ"));
+
+            List<com.simplechat.entity.ChannelMember> pending = channelMemberRepository.findByChannel_ChannelIdAndStatus(channelId, "pending");
+            List<Map<String, Object>> list = pending.stream().map(cm -> Map.<String, Object>of(
+                "memberId", cm.getMemberId(),
+                "username", cm.getUser().getUsername(),
+                "fullName", cm.getUser().getFullName() != null ? cm.getUser().getFullName() : "",
+                "joinedAt", cm.getJoinedAt()
+            )).collect(Collectors.toList());
+            return ResponseEntity.ok(Map.of("pending", list, "count", list.size()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Duyệt / từ chối thành viên chờ
+     * POST /api/users/channels/{channelId}/approve/{memberId}
+     */
+    @PostMapping("/channels/{channelId}/approve/{memberId}")
+    public ResponseEntity<?> approveMember(@PathVariable int channelId, @PathVariable int memberId,
+                                           @RequestBody Map<String, String> body) {
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+        try {
+            User user = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
+            ChannelMember myMembership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).orElse(null);
+            if (myMembership == null || (!myMembership.getRole().equals("owner") && !myMembership.getRole().equals("moderator")))
+                return ResponseEntity.status(403).body(Map.of("error", true, "message", "Bạn không có quyền duyệt thành viên"));
+
+            ChannelMember target = channelMemberRepository.findById(memberId).orElse(null);
+            if (target == null) return ResponseEntity.status(404).body(Map.of("error", true, "message", "Không tìm thấy thành viên"));
+
+            String action = body.getOrDefault("action", "approve");
+            if ("approve".equals(action)) {
+                target.setStatus("approved");
+                channelMemberRepository.save(target);
+                return ResponseEntity.ok(Map.of("message", "Đã duyệt thành viên " + target.getUser().getUsername()));
+            } else {
+                channelMemberRepository.delete(target);
+                return ResponseEntity.ok(Map.of("message", "Đã từ chối thành viên " + target.getUser().getUsername()));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Bật/tắt tự duyệt thành viên
+     * POST /api/users/channels/{channelId}/auto-approve
+     */
+    @PostMapping("/channels/{channelId}/auto-approve")
+    public ResponseEntity<?> toggleAutoApprove(@PathVariable int channelId, @RequestBody Map<String, Boolean> body) {
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+        try {
+            User user = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
+            ChannelMember myMembership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).orElse(null);
+            if (myMembership == null || !myMembership.getRole().equals("owner"))
+                return ResponseEntity.status(403).body(Map.of("error", true, "message", "Chỉ owner mới có thể thay đổi cài đặt này"));
+
+            Channel channel = channelRepository.findById(channelId).orElse(null);
+            if (channel == null) return ResponseEntity.status(404).body(Map.of("error", true, "message", "Không tìm thấy nhóm"));
+
+            boolean newVal = Boolean.TRUE.equals(body.get("autoApprove"));
+            channel.setAutoApprove(newVal);
+            channelRepository.save(channel);
+            return ResponseEntity.ok(Map.of("message", newVal ? "Đã bật tự duyệt" : "Đã tắt tự duyệt", "autoApprove", newVal));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Mời thành viên vào nhóm
+     * POST /api/users/channels/{channelId}/invite
+     */
+    @PostMapping("/channels/{channelId}/invite")
+    public ResponseEntity<?> inviteMember(@PathVariable int channelId, @RequestBody Map<String, String> body) {
+        ResponseEntity<?> authCheck = requireAuth();
+        if (authCheck != null) return authCheck;
+        try {
+            User inviter = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
+            ChannelMember myMembership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, inviter.getUserId()).orElse(null);
+            if (myMembership == null || myMembership.getStatus().equals("pending"))
+                return ResponseEntity.status(403).body(Map.of("error", true, "message", "Bạn không phải thành viên của nhóm này"));
+
+            String targetUsername = body.get("username");
+            User target = userRepository.findByUsername(targetUsername).orElse(null);
+            if (target == null) return ResponseEntity.status(404).body(Map.of("error", true, "message", "Không tìm thấy user " + targetUsername));
+
+            Channel channel = channelRepository.findById(channelId).orElse(null);
+            if (channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, target.getUserId()).isPresent())
+                return ResponseEntity.ok(Map.of("message", target.getUsername() + " đã là thành viên của nhóm"));
+
+            ChannelMember cm = new ChannelMember(channel, target, "member");
+            cm.setStatus("approved"); // Invited = auto approved
+            channelMemberRepository.save(cm);
+            return ResponseEntity.ok(Map.of("message", "Đã mời " + target.getUsername() + " vào nhóm"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
     }
     
     /**
@@ -504,6 +688,29 @@ public class UserController extends BaseController {
         }
     }
     
+    /**
+     * Lấy danh sách thành viên của channel
+     * GET /api/users/channels/{channelId}/members
+     */
+    @GetMapping("/channels/{channelId}/members")
+    public ResponseEntity<?> getChannelMembers(@PathVariable int channelId) {
+        try {
+            List<com.simplechat.entity.ChannelMember> members = channelMemberRepository.findByChannel_ChannelId(channelId);
+            List<Map<String, Object>> memberList = members.stream().map(cm -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("username", cm.getUser().getUsername());
+                m.put("fullName", cm.getUser().getFullName());
+                m.put("role", cm.getRole());
+                m.put("userRole", cm.getUser().getRole());
+                m.put("joinedAt", cm.getJoinedAt());
+                return m;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(Map.of("members", memberList, "count", memberList.size()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
     /**
      * Lấy danh sách bạn bè
      * GET /api/users/friends
