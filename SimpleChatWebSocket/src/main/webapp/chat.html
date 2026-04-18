@@ -438,7 +438,42 @@
       }
       .btn-view-all:hover { background: #e0e7ff; }
 
-      /* Empty States */
+      /* Collapsible sections */
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 24px 8px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .section-header:hover { background: #fafafa; }
+      .section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .section-toggle {
+        font-size: 11px;
+        color: var(--text-dim);
+        transition: transform 0.2s;
+      }
+      .section-toggle.collapsed { transform: rotate(-90deg); }
+      .section-body { overflow: hidden; transition: max-height 0.25s ease; }
+      .section-body.collapsed { max-height: 0 !important; }
+
+      /* Pending badge */
+      .pending-badge {
+        background: #ef4444;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 10px;
+        padding: 1px 7px;
+        margin-left: 6px;
+      }
       .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); padding: 40px; text-align: center; }
       .empty-chat i { font-size: 64px; margin-bottom: 20px; opacity: 0.3; }
 
@@ -470,8 +505,32 @@
         </div>
 
         <div class="chat-list" id="conversationsList">
-          <!-- Dynamically loaded -->
-          <div style="text-align:center; padding: 20px; color: var(--text-dim);">Loading conversations...</div>
+          <!-- Section: Nhóm -->
+          <div class="section-header" onclick="toggleSection('sectionChannels', this)">
+            <span class="section-title">💬 Nhóm</span>
+            <i class="fas fa-chevron-down section-toggle"></i>
+          </div>
+          <div class="section-body" id="sectionChannels" style="max-height:2000px">
+            <div id="channelsList"><div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Đang tải...</div></div>
+          </div>
+
+          <!-- Section: Bạn bè -->
+          <div class="section-header" onclick="toggleSection('sectionUsers', this)">
+            <span class="section-title">👤 Bạn bè</span>
+            <i class="fas fa-chevron-down section-toggle"></i>
+          </div>
+          <div class="section-body" id="sectionUsers" style="max-height:2000px">
+            <div id="usersList"><div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Đang tải...</div></div>
+          </div>
+
+          <!-- Section: Tin nhắn chờ -->
+          <div class="section-header" onclick="toggleSection('sectionPending', this)">
+            <span class="section-title">⏳ Tin nhắn chờ <span class="pending-badge" id="pendingCount" style="display:none">0</span></span>
+            <i class="fas fa-chevron-down section-toggle"></i>
+          </div>
+          <div class="section-body" id="sectionPending" style="max-height:2000px">
+            <div id="pendingList"><div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Không có tin nhắn chờ</div></div>
+          </div>
         </div>
 
         <div class="fab-add">
@@ -636,11 +695,20 @@
         }
       }
 
-      function renderConversations(channels, users) {
-        const list = document.getElementById("conversationsList");
-        list.innerHTML = "";
+      function toggleSection(id, header) {
+        const body = document.getElementById(id);
+        const icon = header.querySelector('.section-toggle');
+        const collapsed = body.classList.toggle('collapsed');
+        icon.classList.toggle('collapsed', collapsed);
+      }
 
-        // Render Channels
+      function renderConversations(channels, users) {
+        // --- Channels ---
+        const chList = document.getElementById("channelsList");
+        chList.innerHTML = "";
+        if (channels.length === 0) {
+          chList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có nhóm nào</div>';
+        }
         channels.forEach(ch => {
           const chId = ch.channelId || ch.id;
           const chName = ch.channelName || ch.name;
@@ -655,15 +723,21 @@
                 <span class="item-name">${chName}</span>
                 <span class="item-time">5m ago</span>
               </div>
-              <div class="item-msg">${ch.description || "is typing a message..."}</div>
+              <div class="item-msg">${ch.description || "Nhấn để xem tin nhắn"}</div>
             </div>
           `;
           item.onclick = () => selectConversation(chName, chId, 'channel', item, ch);
-          list.appendChild(item);
+          chList.appendChild(item);
         });
 
-        // Render DM Users
-        users.filter(u => u.username !== username).forEach(user => {
+        // --- Users ---
+        const uList = document.getElementById("usersList");
+        uList.innerHTML = "";
+        const otherUsers = users.filter(u => u.username !== username);
+        if (otherUsers.length === 0) {
+          uList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có bạn bè</div>';
+        }
+        otherUsers.forEach(user => {
           const item = document.createElement("div");
           item.className = "chat-item";
           item.innerHTML = `
@@ -673,12 +747,16 @@
                 <span class="item-name">${user.username}</span>
                 <span class="item-time">2h ago</span>
               </div>
-              <div class="item-msg">Sounds Great! See you next time</div>
+              <div class="item-msg">${user.fullName || 'Nhấn để nhắn tin'}</div>
             </div>
           `;
           item.onclick = () => selectConversation(user.username, null, 'dm', item, null);
-          list.appendChild(item);
+          uList.appendChild(item);
         });
+
+        // --- Pending (placeholder, có thể mở rộng sau) ---
+        const pList = document.getElementById("pendingList");
+        pList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Không có tin nhắn chờ</div>';
       }
 
       function selectConversation(name, id, type, element, chData) {
