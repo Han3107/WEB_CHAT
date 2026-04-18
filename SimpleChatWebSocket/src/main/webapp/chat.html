@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -374,9 +374,19 @@
       }
       .send-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(126, 211, 140, 0.4); }
 
-      /* Column 4: Profile Sidebar (Hidden as per design) */
+      /* Column 4: Profile Sidebar */
       .profile-sidebar {
         display: none;
+        width: 320px;
+        background: var(--sidebar-bg);
+        border-left: 1px solid var(--border-color);
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 24px;
+        overflow-y: auto;
+      }
+      .profile-sidebar.open {
+        display: flex;
       }
 
       .profile-info { text-align: center; margin-bottom: 32px; width: 100%; }
@@ -582,7 +592,7 @@
       .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); padding: 40px; text-align: center; }
       .empty-chat i { font-size: 64px; margin-bottom: 20px; opacity: 0.3; }
 
-      @media (max-width: 1200px) { .profile-sidebar { display: none; } }
+      @media (max-width: 1200px) { .profile-sidebar.open { position: absolute; right: 0; top: 0; bottom: 0; z-index: 200; box-shadow: -4px 0 15px rgba(0,0,0,0.05); } }
       @media (max-width: 900px) { .list-sidebar { width: 260px; } }
       @media (max-width: 768px) { .list-sidebar { display: none; } }
     </style>
@@ -591,7 +601,7 @@
     <div class="app-container">
       <!-- 1: Icon Sidebar -->
       <nav class="nav-sidebar">
-        <div class="nav-logo" id="navLogo" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:white;">
+        <div class="nav-logo" id="navLogo" onclick="showMyProfile()" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:white;cursor:pointer;" title="Hồ sơ của tôi">
         </div>
         <div class="nav-item"><i class="fas fa-home"></i></div>
         <div class="nav-item"><i class="fas fa-calendar-alt"></i></div>
@@ -634,6 +644,15 @@
           </div>
           <div class="section-body" id="sectionUsers" style="max-height:2000px">
             <div id="usersList"><div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Đang tải...</div></div>
+          </div>
+
+          <!-- Section: Đề xuất kết bạn -->
+          <div class="section-header" onclick="toggleSection('sectionRecommendations', this)">
+            <span class="section-title">👋 Đề xuất kết bạn</span>
+            <i class="fas fa-chevron-down section-toggle"></i>
+          </div>
+          <div class="section-body" id="sectionRecommendations" style="max-height:2000px">
+            <div id="recommendationsList"><div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Đang tải...</div></div>
           </div>
 
           <!-- Section: Tin nhắn chờ -->
@@ -718,17 +737,20 @@
       </main>
 
       <!-- 4: Profile Sidebar -->
-      <aside class="profile-sidebar">
+      <aside class="profile-sidebar" id="profileSidebar">
+        <div style="width: 100%; display: flex; justify-content: flex-end; margin-bottom: 10px;">
+          <i class="fas fa-times" style="cursor: pointer; color: var(--text-dim); font-size: 18px;" onclick="document.getElementById('profileSidebar').classList.remove('open')"></i>
+        </div>
         <div class="profile-info" id="profilePanel">
           <div class="profile-avatar-large" id="profileAvatarLarge">?</div>
           <h3 id="profileName">Detail Profile</h3>
           <p id="profileSub">Select a chat to see more</p>
         </div>
 
-        <div class="profile-contact">
+        <div class="profile-contact" id="profileContact" style="display:none">
           <div class="contact-btn"><i class="fas fa-phone-alt"></i></div>
           <div class="contact-btn"><i class="fas fa-video"></i></div>
-          <div class="contact-btn"><i class="fas fa-envelope"></i></div>
+          <div class="contact-btn" id="btnProfileMessage"><i class="fas fa-envelope"></i></div>
         </div>
 
         <div class="profile-tabs">
@@ -769,6 +791,8 @@
       let currentSelection = null;
       let channelMap = {};
       let onlineUsers = new Set();
+      let friendsData = [];
+      let pendingSentData = [];
       let ws = null;
       const username = localStorage.getItem("username") || "User";
       const userRole = localStorage.getItem("role") || "user";
@@ -869,13 +893,16 @@
       // ── Load conversations ───────────────────────────────────────
       async function loadConversations() {
         try {
-          const [chanRes, friendRes] = await Promise.all([
+          const [chanRes, friendRes, allUsersRes] = await Promise.all([
             fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }}),
-            fetch("/SimpleChatWebSocket/api/friends", { headers: { Authorization: "Bearer " + token }})
+            fetch("/SimpleChatWebSocket/api/friends", { headers: { Authorization: "Bearer " + token }}),
+            fetch("/SimpleChatWebSocket/api/users", { headers: { Authorization: "Bearer " + token }})
           ]);
           const chanData = await chanRes.json();
-          const friendData = await friendRes.json();
-          renderConversations(chanData.channels || [], friendData.friends || []);
+          const friendDataObj = await friendRes.json();
+          const allUsersData = await allUsersRes.json();
+          friendsData = friendDataObj.friends || [];
+          renderConversations(chanData.channels || [], friendsData, allUsersData.users || []);
         } catch (err) { console.error("Load fail:", err); }
       }
 
@@ -902,7 +929,7 @@
         icon.classList.toggle('collapsed', body.classList.toggle('collapsed'));
       }
 
-      function renderConversations(channels, friends) {
+      function renderConversations(channels, friends, allUsers) {
         // Channels
         const chList = document.getElementById("channelsList");
         chList.innerHTML = channels.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Chưa có nhóm nào</div>';
@@ -927,6 +954,26 @@
           item.innerHTML = `${getUserAvatar(friend.username)}<div class="item-info"><div class="item-top"><span class="item-name">${friend.username}</span><span class="item-time"></span></div><div class="item-msg">${friend.fullName||'Nhấn để nhắn tin'}</div></div>`;
           item.onclick = () => selectConversation(friend.username, null, 'dm', item, null);
           uList.appendChild(item);
+        });
+
+        // Recommendations (non-friends)
+        const recList = document.getElementById("recommendationsList");
+        const friendUsernames = new Set(friends.map(f => f.username));
+        friendUsernames.add(username); // exclude self
+        friendUsernames.add('admin'); // exclude admin
+
+        const recs = allUsers.filter(u => !friendUsernames.has(u.username));
+        recList.innerHTML = recs.length ? "" : '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Không có đề xuất nào</div>';
+        recs.slice(0, 10).forEach(u => {
+          const item = document.createElement("div");
+          item.className = "chat-item";
+          item.style.padding = "10px 24px";
+          item.innerHTML = `
+            ${getUserAvatar(u.username, 40)}
+            <div class="item-info"><div class="item-top" style="margin-bottom:0"><span class="item-name" style="font-size:14px">${u.username}</span></div><div class="item-msg" style="font-size:12px">${u.fullName||''}</div></div>
+            <button class="friend-action-btn btn-add-friend" onclick="event.stopPropagation();sendFriendRequest('${u.username}',this)">➕ Kết bạn</button>
+          `;
+          recList.appendChild(item);
         });
 
         // Pending placeholder
@@ -1013,16 +1060,28 @@
           const data = await res.json();
           const members = data.members || [];
           document.getElementById("memberCount").innerText = `(${members.length})`;
+          
+          const friendUsernames = new Set(friendsData.map(f => f.username));
+
           list.innerHTML = members.map(m => {
             const isOnline = onlineUsers.has(m.username);
             const badgeClass = m.role === 'owner' ? 'owner' : m.role === 'moderator' ? 'moderator' : '';
+            
+            let actionBtn = '';
+            if (m.username !== username && m.username !== 'admin' && !friendUsernames.has(m.username)) {
+              actionBtn = `<button class="friend-action-btn btn-add-friend" style="padding: 4px 8px; font-size: 10px;" onclick="event.stopPropagation();sendFriendRequest('${m.username}',this)">➕ Kết bạn</button>`;
+            }
+
             return `<div class="member-item">
               ${getUserAvatar(m.username, 36)}
               <div style="flex:1">
                 <div style="font-weight:600;font-size:13px">${m.username} ${isOnline?'<span style="color:#22c55e;font-size:11px">● online</span>':''}</div>
                 <div style="font-size:11px;color:var(--text-dim)">${m.fullName||''}</div>
               </div>
-              ${m.role!=='member'?`<span class="role-badge ${badgeClass}">${m.role}</span>`:''}
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                ${m.role!=='member'?`<span class="role-badge ${badgeClass}">${m.role}</span>`:''}
+                ${actionBtn}
+              </div>
             </div>`;
           }).join('');
         } catch(e) { list.innerHTML = '<div style="padding:16px;color:red;font-size:13px">Lỗi tải thành viên</div>'; }
@@ -1162,11 +1221,17 @@
             method: "POST", headers: { Authorization: "Bearer " + token }
           });
           const data = await res.json();
-          alert(data.message);
-          const chanRes = await fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }});
-          const chanData = await chanRes.json();
-          channelMap[currentSelection.name] = chanData.channels.find(c => (c.channelId||c.id) == currentSelection.id);
-          selectConversation(currentSelection.name, currentSelection.id, 'channel', document.querySelector(".chat-item.active"), channelMap[currentSelection.name]);
+          if (data.status === 'pending') {
+            alert('⏳ Yêu cầu tham gia đã được gửi. Chờ owner duyệt.');
+            document.getElementById("joinOverlay").innerHTML = `
+              <p style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">⏳ Yêu cầu đang chờ duyệt...</p>`;
+          } else {
+            alert(data.message);
+            const chanRes = await fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }});
+            const chanData = await chanRes.json();
+            channelMap[currentSelection.name] = chanData.channels.find(c => (c.channelId||c.id) == currentSelection.id);
+            selectConversation(currentSelection.name, currentSelection.id, 'channel', document.querySelector(".chat-item.active"), channelMap[currentSelection.name]);
+          }
         } catch(err) { alert("Error joining channel"); }
       }
 
@@ -1467,6 +1532,28 @@
       }
 
       function logout() { if (confirm("Đăng xuất khỏi hệ thống?")) { localStorage.clear(); window.location.href = "login.html"; } }
+
+      // ── Profile Viewing ──────────────────────────────────────────
+      async function showMyProfile() {
+        try {
+          const res = await fetch('/SimpleChatWebSocket/api/users/profile', {
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            document.getElementById('profileAvatarLarge').style.background = getUserColor(data.username);
+            document.getElementById('profileAvatarLarge').style.color = 'white';
+            document.getElementById('profileAvatarLarge').innerText = getInitials(data.username);
+            document.getElementById('profileName').innerText = data.fullName || data.username;
+            document.getElementById('profileSub').innerText = data.email || 'Không có email';
+            document.getElementById('profileContact').style.display = 'none'; // Don't show contact buttons for self
+            document.getElementById('profileSidebar').classList.add('open');
+          }
+        } catch (e) {
+          console.error("Lỗi tải profile:", e);
+        }
+      }
+
     </script>
     <!-- Modal: Lời mời kết bạn chờ xử lý -->
     <div class="modal-overlay" id="pendingFriendsModal">

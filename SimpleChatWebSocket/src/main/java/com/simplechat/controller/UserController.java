@@ -504,24 +504,40 @@ public class UserController extends BaseController {
                 .body(Map.of("error", true, "message", "User hoặc Channel không tồn tại"));
         }
 
-        // Check if already a member
-        if (channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).isPresent()) {
-            return ResponseEntity.ok(Map.of("message", "Bạn đã là thành viên của kênh này"));
+        // Check if already a member (any status)
+        var existing = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId());
+        if (existing.isPresent()) {
+            String s = existing.get().getStatus();
+            if ("approved".equals(s)) return ResponseEntity.ok(Map.of("message", "Bạn đã là thành viên của kênh này"));
+            if ("pending".equals(s))  return ResponseEntity.ok(Map.of("message", "Yêu cầu của bạn đang chờ duyệt", "status", "pending"));
         }
 
-        com.simplechat.entity.ChannelMember membership = new com.simplechat.entity.ChannelMember();
+        // Determine status based on autoApprove
+        boolean autoApprove = Boolean.TRUE.equals(channel.getAutoApprove());
+        String status = autoApprove ? "approved" : "pending";
+
+        ChannelMember membership = new ChannelMember();
         membership.setChannel(channel);
         membership.setUser(user);
         membership.setRole("member");
+        membership.setStatus(status);
         membership.setJoinedAt(LocalDateTime.now());
-
         channelMemberRepository.save(membership);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Bạn đã tham gia kênh thành công");
-        response.put("channelId", channelId);
-        response.put("username", user.getUsername());
-        return ResponseEntity.ok(response);
+        if ("pending".equals(status)) {
+            return ResponseEntity.ok(Map.of(
+                "message", "Yêu cầu tham gia đã được gửi, chờ owner duyệt",
+                "status", "pending",
+                "channelId", channelId
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Bạn đã tham gia kênh thành công",
+            "status", "approved",
+            "channelId", channelId,
+            "username", user.getUsername()
+        ));
     }
     
     /**
