@@ -408,7 +408,12 @@ public class UserController extends BaseController {
         try {
             User user = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
             ChannelMember myMembership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).orElse(null);
-            if (myMembership == null || (!myMembership.getRole().equals("owner") && !myMembership.getRole().equals("moderator")))
+            
+            // Allow if user is owner/moderator OR if user is a system Admin
+            boolean isAuthorized = (myMembership != null && (myMembership.getRole().equals("owner") || myMembership.getRole().equals("moderator")))
+                                || (user != null && "admin".equalsIgnoreCase(user.getRole()));
+
+            if (!isAuthorized)
                 return ResponseEntity.status(403).body(Map.of("error", true, "message", "Bạn không có quyền xem danh sách chờ"));
 
             List<com.simplechat.entity.ChannelMember> pending = channelMemberRepository.findByChannel_ChannelIdAndStatus(channelId, "pending");
@@ -436,7 +441,12 @@ public class UserController extends BaseController {
         try {
             User user = userRepository.findByUsername(getCurrentUser().getUsername()).orElse(null);
             ChannelMember myMembership = channelMemberRepository.findByChannel_ChannelIdAndUser_UserId(channelId, user.getUserId()).orElse(null);
-            if (myMembership == null || (!myMembership.getRole().equals("owner") && !myMembership.getRole().equals("moderator")))
+            
+            // Allow if user is owner/moderator OR if user is a system Admin
+            boolean isAuthorized = (myMembership != null && (myMembership.getRole().equals("owner") || myMembership.getRole().equals("moderator")))
+                                || (user != null && "admin".equalsIgnoreCase(user.getRole()));
+
+            if (!isAuthorized)
                 return ResponseEntity.status(403).body(Map.of("error", true, "message", "Bạn không có quyền duyệt thành viên"));
 
             ChannelMember target = channelMemberRepository.findById(memberId).orElse(null);
