@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.simplechat.entity.ActivityLog;
 import com.simplechat.entity.Channel;
+import com.simplechat.entity.ChannelMember;
 import com.simplechat.entity.User;
 import com.simplechat.repository.ActivityLogRepository;
 import com.simplechat.repository.AppStatisticsRepository;
