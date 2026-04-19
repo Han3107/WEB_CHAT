@@ -191,8 +191,24 @@
     /* Pending requests */
     .req-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
     .req-item:last-child { border-bottom:none; }
-  </style>
-</head>
+      .header-actions .badge-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 10px;
+        height: 10px;
+        background: #ef4444;
+        border: 2px solid white;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
+    </style>
+  </head>
 <body>
 
 <!-- Sidebar -->
@@ -396,6 +412,17 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('userModal')">Hủy</button>
       <button class="btn btn-primary" onclick="saveUser()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: View & Approve Pending Members -->
+<div class="modal" id="pendingMembersModal">
+  <div class="modal-box" style="max-width:500px">
+    <h3>👥 Thành viên chờ duyệt</h3>
+    <div id="adminPendingMembersList" style="margin:16px 0; max-height:400px; overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('pendingMembersModal')">Đóng</button>
     </div>
   </div>
 </div>
@@ -648,6 +675,7 @@
         <td>${ch.memberCount||0}</td>
         <td style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick='openChannelModal(${JSON.stringify(ch)})'>✏️ Sửa</button>
+          <button class="btn" style="background:#e0e7ff;color:#4338ca" onclick="openAdminPendingMembers(${ch.channelId})" title="Duyệt thành viên">👥 Duyệt</button>
           <button class="btn" style="${toggleStyle}" onclick="adminToggleAutoApprove(${ch.channelId},${!autoApprove})">${toggleLabel}</button>
           <button class="btn btn-danger" onclick="deleteChannel(${ch.channelId},'${ch.channelName}')">🗑 Xóa</button>
         </td></tr>`;
@@ -734,6 +762,58 @@
   }
 
   function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  async function openAdminPendingMembers(channelId) {
+    const list = document.getElementById('adminPendingMembersList');
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim)">Đang tải...</div>';
+    document.getElementById('pendingMembersModal').classList.add('active');
+    
+    try {
+      const res = await fetch(`${API}/users/channels/${channelId}/pending`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      const pending = data.pending || [];
+      
+      if (!pending.length) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim)">Không có thành viên nào đang chờ duyệt</div>';
+        return;
+      }
+      
+      list.innerHTML = pending.map(m => `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #f3f4f6">
+          <div style="width:36px;height:36px;border-radius:50%;background:${uc(m.username)};display:flex;align-items:center;justify-content:center;color:white;font-weight:700">${ini(m.username)}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:14px">${m.username}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${m.fullName || ''}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-success" style="padding:4px 8px;font-size:12px" onclick="adminRespondMember(${channelId},${m.memberId},'approve',this)">Duyệt</button>
+            <button class="btn btn-danger" style="padding:4px 8px;font-size:12px" onclick="adminRespondMember(${channelId},${m.memberId},'reject',this)">Xóa</button>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      list.innerHTML = `<div style="padding:16px;text-align:center;color:red">Lỗi: ${e.message}</div>`;
+    }
+  }
+
+  async function adminRespondMember(channelId, memberId, action, btn) {
+    try {
+      const res = await fetch(`${API}/users/channels/${channelId}/approve/${memberId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        btn.closest('div[style*="border-bottom"]').remove();
+        loadDashboard(); // Update total pending count
+        loadChannels();  // Update member count
+      } else {
+        alert(data.message);
+      }
+    } catch(e) { alert('Lỗi: ' + e.message); }
+  }
 
   function logout() {
     if (confirm('Đăng xuất?')) { localStorage.clear(); window.location.href = 'login.html'; }

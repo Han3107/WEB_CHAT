@@ -595,6 +595,22 @@
       @media (max-width: 1200px) { .profile-sidebar.open { position: absolute; right: 0; top: 0; bottom: 0; z-index: 200; box-shadow: -4px 0 15px rgba(0,0,0,0.05); } }
       @media (max-width: 900px) { .list-sidebar { width: 260px; } }
       @media (max-width: 768px) { .list-sidebar { display: none; } }
+      .badge-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 10px;
+        height: 10px;
+        background: #ef4444;
+        border: 2px solid white;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
     </style>
   </head>
   <body>
@@ -1050,7 +1066,12 @@
           document.getElementById('btnRemoveFriend')?.remove();
           // Show settings only for owner/moderator
           const myRole = (chData || channelMap[name] || {}).myRole;
-          document.getElementById("btnGroupSettings").style.display = (myRole === 'owner') ? "" : "none";
+          const btnSettings = document.getElementById("btnGroupSettings");
+          btnSettings.style.display = (myRole === 'owner') ? "" : "none";
+          btnSettings.innerHTML = '<i class="fas fa-cog"></i><span id="pendingMemberBadge" class="badge-dot" style="display:none"></span>';
+          
+          if (myRole === 'owner') checkPendingMembers(id);
+          
           document.getElementById("headerStatus").innerText = (ch.channelType||'public') + ' · ' + (ch.memberCount||0) + ' thành viên';
         } else {
           headerEl.className = "header-avatar";
@@ -1605,15 +1626,31 @@
         } catch(e) { alert('Lỗi: ' + e.message); }
       }
 
+      async function checkPendingMembers(channelId) {
+        try {
+          const res = await fetch(`./api/users/channels/${channelId}/pending`, {
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const count = (data.pending || []).length;
+          const badge = document.getElementById('pendingMemberBadge');
+          if (badge) badge.style.display = count > 0 ? 'block' : 'none';
+        } catch(e) {}
+      }
+
       async function loadPendingMembers(channelId) {
         const list = document.getElementById('pendingMembersList');
         list.innerHTML = '<div style="padding:12px;color:var(--text-dim)">Đang tải...</div>';
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${channelId}/pending`, {
+          const res = await fetch(`./api/users/channels/${channelId}/pending`, {
             headers: { Authorization: 'Bearer ' + token }
           });
           const data = await res.json();
           const pending = data.pending || [];
+          // Update badge
+          const badge = document.getElementById('pendingMemberBadge');
+          if (badge) badge.style.display = pending.length > 0 ? 'block' : 'none';
+
           if (!pending.length) { list.innerHTML = '<div style="padding:12px;color:var(--text-dim);text-align:center">Không có thành viên chờ duyệt</div>'; return; }
           list.innerHTML = pending.map(m => `
             <div class="pending-item">
