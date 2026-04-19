@@ -436,10 +436,6 @@ public class AdminController extends BaseController {
      */
     @PostMapping("/channels")
     public ResponseEntity<?> createChannel(@RequestBody Map<String, String> payload) {
-        // TODO: Thêm permission check khi auth hoàn tất
-        // ResponseEntity<?> permCheck = requirePermission(Permission.ADMIN_MANAGE_CHANNELS);
-        // if (permCheck != null) return permCheck;
-        
         try {
             String channelName = payload.get("channelName");
             String description = payload.get("description");
@@ -449,25 +445,37 @@ public class AdminController extends BaseController {
                 return buildErrorResponse("Tên channel không được để trống");
             }
             
-            // Get admin user (assuming user with id = 1 or username = admin)
-            User adminUser = userRepository.findByUsername("admin")
-                    .orElse(userRepository.findAll().stream().findFirst().orElse(null));
+            User adminUser = userRepository.findByUsername("admin").orElse(null);
+            if (adminUser == null) {
+                adminUser = userRepository.findAll().stream().findFirst().orElse(null);
+            }
             
             if (adminUser == null) {
                 return buildErrorResponse("Không tìm thấy user để tạo channel");
             }
             
-            Channel channel = new Channel(channelName, channelType, adminUser);
+            // Generate unique invite code (same logic as UserController)
+            String inviteCode = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            
+            Channel channel = new Channel(channelName.trim(), channelType, adminUser);
             channel.setDescription(description);
             channel.setIsActive(true);
-            channel.setMemberCount(1); // Thêm creator vào
+            channel.setInviteCode(inviteCode);
+            channel.setAutoApprove(true); // Default to auto-approve for admin-created channels
+            channel.setMemberCount(1);
             
             channelRepository.save(channel);
             
+            // Add creator as owner
+            ChannelMember cm = new ChannelMember(channel, adminUser, "owner");
+            cm.setStatus("approved");
+            channelMemberRepository.save(cm);
+            
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Channel #" + channelName + " đã được tạo");
+            response.put("message", "Nhóm #" + channelName + " đã được tạo với mã mời: " + inviteCode);
             response.put("channelId", channel.getChannelId());
             response.put("channelName", channel.getChannelName());
+            response.put("inviteCode", inviteCode);
             response.put("timestamp", System.currentTimeMillis());
             
             return ResponseEntity.ok(response);
