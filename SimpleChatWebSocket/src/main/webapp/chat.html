@@ -826,7 +826,8 @@
       // ── WebSocket realtime ───────────────────────────────────────
       function connectWS() {
         const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsUrl = `${proto}://${location.host}/SimpleChatWebSocket/chat`;
+        const contextPath = location.pathname.substring(0, location.pathname.lastIndexOf('/'));
+        const wsUrl = `${proto}://${location.host}${contextPath}/chat`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
@@ -884,7 +885,7 @@
         if (pendingCode) {
           localStorage.removeItem('pendingJoinCode');
           setTimeout(async () => {
-            const res = await fetch('/SimpleChatWebSocket/api/users/channels/join-by-code', {
+            const res = await fetch('./api/users/channels/join-by-code', {
               method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
               body: JSON.stringify({ inviteCode: pendingCode })
             });
@@ -905,11 +906,11 @@
       async function loadConversations() {
         try {
           const [chanRes, friendRes, allUsersRes, sentRes, pendingRes] = await Promise.all([
-            fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }}),
-            fetch("/SimpleChatWebSocket/api/friends", { headers: { Authorization: "Bearer " + token }}),
-            fetch("/SimpleChatWebSocket/api/users", { headers: { Authorization: "Bearer " + token }}),
-            fetch("/SimpleChatWebSocket/api/friends/sent", { headers: { Authorization: "Bearer " + token }}),
-            fetch("/SimpleChatWebSocket/api/friends/pending", { headers: { Authorization: "Bearer " + token }})
+            fetch("./api/users/channels", { headers: { Authorization: "Bearer " + token }}),
+            fetch("./api/friends", { headers: { Authorization: "Bearer " + token }}),
+            fetch("./api/users", { headers: { Authorization: "Bearer " + token }}),
+            fetch("./api/friends/sent", { headers: { Authorization: "Bearer " + token }}),
+            fetch("./api/friends/pending", { headers: { Authorization: "Bearer " + token }})
           ]);
           const chanData = await chanRes.json();
           const friendDataObj = await friendRes.json();
@@ -1106,7 +1107,7 @@
         const list = document.getElementById("membersList");
         list.innerHTML = '<div style="padding:16px;color:var(--text-dim);font-size:13px">Đang tải...</div>';
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${channelId}/members`, { headers: { Authorization: "Bearer " + token }});
+          const res = await fetch(`./api/users/channels/${channelId}/members`, { headers: { Authorization: "Bearer " + token }});
           const data = await res.json();
           const members = data.members || [];
           document.getElementById("memberCount").innerText = `(${members.length})`;
@@ -1147,8 +1148,8 @@
         const area = document.getElementById("messagesArea");
         area.innerHTML = '<div style="text-align:center;padding:40px"><i class="fas fa-spinner fa-spin"></i></div>';
         const url = type === 'channel'
-          ? `/SimpleChatWebSocket/api/users/channels/${target}/messages?page=0&size=100`
-          : `/SimpleChatWebSocket/api/users/dm/${target}?sender=${username}`;
+          ? `./api/users/channels/${target}/messages?page=0&size=100`
+          : `./api/users/dm/${target}?sender=${username}`;
         try {
           const res = await fetch(url, { headers: { Authorization: "Bearer " + token }});
           const data = await res.json();
@@ -1204,7 +1205,7 @@
         const body = currentSelection.type === 'channel'
           ? { channelId: currentSelection.id, content }
           : { senderUsername: username, recipientUsername: currentSelection.name, content };
-        const url = currentSelection.type === 'channel' ? "/SimpleChatWebSocket/api/users/messages" : "/SimpleChatWebSocket/api/users/dm";
+        const url = currentSelection.type === 'channel' ? "./api/users/messages" : "./api/users/dm";
 
         fetch(url, {
           method: "POST",
@@ -1237,7 +1238,7 @@
           const body = currentSelection.type === 'channel'
             ? { channelId: currentSelection.id, content: dataUrl }
             : { senderUsername: username, recipientUsername: currentSelection.name, content: dataUrl };
-          const url = currentSelection.type === 'channel' ? "/SimpleChatWebSocket/api/users/messages" : "/SimpleChatWebSocket/api/users/dm";
+          const url = currentSelection.type === 'channel' ? "./api/users/messages" : "./api/users/dm";
           fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
@@ -1280,7 +1281,7 @@
       async function joinChannelAPI() {
         if (!currentSelection || currentSelection.type !== 'channel') return;
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${currentSelection.id}/join`, {
+          const res = await fetch(`./api/users/channels/${currentSelection.id}/join`, {
             method: "POST", headers: { Authorization: "Bearer " + token }
           });
           const data = await res.json();
@@ -1290,7 +1291,7 @@
               <p style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">⏳ Yêu cầu đang chờ duyệt...</p>`;
           } else {
             alert(data.message);
-            const chanRes = await fetch("/SimpleChatWebSocket/api/users/channels", { headers: { Authorization: "Bearer " + token }});
+            const chanRes = await fetch("./api/users/channels", { headers: { Authorization: "Bearer " + token }});
             const chanData = await chanRes.json();
             channelMap[currentSelection.name] = chanData.channels.find(c => (c.channelId||c.id) == currentSelection.id);
             selectConversation(currentSelection.name, currentSelection.id, 'channel', document.querySelector(".chat-item.active"), channelMap[currentSelection.name]);
@@ -1314,16 +1315,37 @@
         results.innerHTML = '<div style="padding:12px 16px;color:var(--text-dim);font-size:13px">Đang tìm...</div>';
         results.classList.add('open');
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/friends/search?q=${encodeURIComponent(q)}`, {
+          let channelHtml = '';
+          try {
+            // Try searching for channel by code
+            const chanRes = await fetch(`./api/users/channels/search-by-code?code=${encodeURIComponent(q)}`, {
+              headers: { Authorization: 'Bearer ' + token }
+            });
+            if (chanRes.ok) {
+              const chanData = await chanRes.json();
+              if (chanData.channel) {
+                const c = chanData.channel;
+                channelHtml = `<div class="search-result-item" onclick="joinChannelByCodeDirect('${c.inviteCode}')">
+                  ${getChannelAvatar(c, 36)}
+                  <div style="flex:1"><div style="font-weight:600;font-size:13px">${c.channelName}</div><div style="font-size:11px;color:var(--text-dim)">Mã nhóm: ${c.inviteCode}</div></div>
+                  <button class="friend-action-btn btn-add-friend" onclick="event.stopPropagation();joinChannelByCodeDirect('${c.inviteCode}')">Tham gia</button>
+                </div>`;
+              }
+            }
+          } catch(e) {}
+
+          const res = await fetch(`./api/friends/search?q=${encodeURIComponent(q)}`, {
             headers: { Authorization: 'Bearer ' + token }
           });
           const data = await res.json();
           const users = data.users || [];
-          if (!users.length) {
+          
+          if (!users.length && !channelHtml) {
             results.innerHTML = '<div style="padding:12px 16px;color:var(--text-dim);font-size:13px">Không tìm thấy</div>';
             return;
           }
-          results.innerHTML = users.map(u => {
+
+          let usersHtml = users.map(u => {
             let btn = '';
             if (u.friendStatus === 'accepted')
               btn = `<button class="friend-action-btn btn-msg" onclick="event.stopPropagation();startDM('${u.username}')">💬 Nhắn tin</button>`;
@@ -1337,9 +1359,30 @@
               ${btn}
             </div>`;
           }).join('');
+
+          results.innerHTML = channelHtml + usersHtml;
         } catch(e) {
           results.innerHTML = '<div style="padding:12px 16px;color:red;font-size:13px">Lỗi tìm kiếm</div>';
         }
+      }
+
+      async function joinChannelByCodeDirect(code) {
+        try {
+          const res = await fetch('./api/users/channels/join-by-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ inviteCode: code })
+          });
+          const data = await res.json();
+          document.getElementById('searchResults').classList.remove('open');
+          document.getElementById('searchInput').value = '';
+          if (data.status === 'pending') {
+            alert('✅ Yêu cầu đã gửi! Chờ owner duyệt.');
+          } else if (res.ok) {
+            alert('✅ Tham gia nhóm thành công!');
+            loadConversations();
+          } else { alert(data.message || 'Lỗi'); }
+        } catch(e) { alert('Lỗi: ' + e.message); }
       }
 
       document.addEventListener('click', (e) => {
@@ -1349,7 +1392,7 @@
 
       async function sendFriendRequest(username, btn) {
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/friends/request/${username}`, {
+          const res = await fetch(`./api/friends/request/${username}`, {
             method: 'POST', headers: { Authorization: 'Bearer ' + token }
           });
           const data = await res.json();
@@ -1370,7 +1413,7 @@
 
       async function cancelFriendRequest(username, btn) {
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/friends/request/${username}`, {
+          const res = await fetch(`./api/friends/request/${username}`, {
             method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
           });
           const data = await res.json();
@@ -1390,7 +1433,7 @@
         const list = document.getElementById('pendingFriendsList');
         list.innerHTML = '<div style="padding:12px;color:var(--text-dim)">Đang tải...</div>';
         try {
-          const res = await fetch('/SimpleChatWebSocket/api/friends/pending', {
+          const res = await fetch('./api/friends/pending', {
             headers: { Authorization: 'Bearer ' + token }
           });
           const data = await res.json();
@@ -1419,7 +1462,7 @@
 
       async function respondFriend(friendshipId, action) {
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/friends/respond/${friendshipId}`, {
+          const res = await fetch(`./api/friends/respond/${friendshipId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({ action })
@@ -1439,7 +1482,7 @@
       async function removeFriend(username) {
         if (!confirm(`Xóa ${username} khỏi danh sách bạn bè?`)) return;
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/friends/${username}`, {
+          const res = await fetch(`./api/friends/${username}`, {
             method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
           });
           const data = await res.json();
@@ -1465,7 +1508,7 @@
       // Load pending count on init
       async function loadPendingCount() {
         try {
-          const res = await fetch('/SimpleChatWebSocket/api/friends/pending', { headers: { Authorization: 'Bearer ' + token }});
+          const res = await fetch('./api/friends/pending', { headers: { Authorization: 'Bearer ' + token }});
           const data = await res.json();
           const count = (data.pending || []).length;
           const badge = document.getElementById('pendingFriendCount');
@@ -1496,7 +1539,7 @@
         const autoApprove = document.getElementById('newGroupAutoApprove').checked;
         if (!name) { alert('Vui lòng nhập tên nhóm'); return; }
         try {
-          const res = await fetch('/SimpleChatWebSocket/api/users/channels', {
+          const res = await fetch('./api/users/channels', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({ channelName: name, description: desc, channelType: type, autoApprove })
@@ -1517,7 +1560,7 @@
         const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
         if (!code) { alert('Vui lòng nhập mã mời'); return; }
         try {
-          const res = await fetch('/SimpleChatWebSocket/api/users/channels/join-by-code', {
+          const res = await fetch('./api/users/channels/join-by-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({ inviteCode: code })
@@ -1551,7 +1594,7 @@
         const uname = document.getElementById('inviteUsername').value.trim();
         if (!uname) { alert('Nhập username cần mời'); return; }
         try {
-          const res = await fetch(`/SimpleChatWebSocket/api/users/channels/${currentSelection.id}/invite`, {
+          const res = await fetch(`./api/users/channels/${currentSelection.id}/invite`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({ username: uname })

@@ -333,7 +333,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * Vào nhóm theo mã mời
+     * Tham gia nhóm theo mã mời
      * POST /api/users/channels/join-by-code
      */
     @PostMapping("/channels/join-by-code")
@@ -365,6 +365,33 @@ public class UserController extends BaseController {
                 return ResponseEntity.ok(Map.of("message", "Yêu cầu tham gia đã được gửi, chờ duyệt", "status", "pending", "channelId", channel.getChannelId()));
 
             return ResponseEntity.ok(Map.of("message", "Tham gia nhóm thành công", "status", "approved", "channelId", channel.getChannelId(), "channelName", channel.getChannelName()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Tìm kiếm nhóm theo mã mời
+     * GET /api/users/channels/search-by-code
+     */
+    @GetMapping("/channels/search-by-code")
+    public ResponseEntity<?> searchByCode(@org.springframework.web.bind.annotation.RequestParam String code) {
+        try {
+            if (code == null || code.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", true, "message", "Thiếu mã mời"));
+            }
+            Channel channel = channelRepository.findByInviteCode(code.trim().toUpperCase()).orElse(null);
+            if (channel == null) {
+                return ResponseEntity.status(404).body(Map.of("error", true, "message", "Không tìm thấy nhóm"));
+            }
+
+            Map<String, Object> channelMap = new HashMap<>();
+            channelMap.put("channelId", channel.getChannelId());
+            channelMap.put("channelName", channel.getChannelName());
+            channelMap.put("description", channel.getDescription());
+            channelMap.put("channelType", channel.getChannelType());
+            channelMap.put("inviteCode", channel.getInviteCode());
+            return ResponseEntity.ok(Map.of("channel", channelMap));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", true, "message", e.getMessage()));
         }
