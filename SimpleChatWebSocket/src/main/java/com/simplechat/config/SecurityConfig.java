@@ -70,6 +70,11 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/api/users/**"),
                     new AntPathRequestMatcher("/SimpleChatWebSocket/api/users/**")
                 ).permitAll()
+                // Allow public access to friends API
+                .requestMatchers(
+                    new AntPathRequestMatcher("/api/friends/**"),
+                    new AntPathRequestMatcher("/SimpleChatWebSocket/api/friends/**")
+                ).permitAll()
                 // Allow static resources
                 .requestMatchers(
                     new AntPathRequestMatcher("/css/**"),
@@ -81,7 +86,9 @@ public class SecurityConfig {
                 .requestMatchers(
                     new AntPathRequestMatcher("/ws/**"),
                     new AntPathRequestMatcher("/app/**"),
-                    new AntPathRequestMatcher("/topic/**")
+                    new AntPathRequestMatcher("/topic/**"),
+                    new AntPathRequestMatcher("/chat/**"),
+                    new AntPathRequestMatcher("/SimpleChatWebSocket/chat/**")
                 ).permitAll()
                 // All other requests require authentication
                 .anyRequest().authenticated()
