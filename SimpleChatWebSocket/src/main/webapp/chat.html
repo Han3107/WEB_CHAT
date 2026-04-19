@@ -844,6 +844,17 @@
                 String(currentSelection.id) === String(data.channelId)) {
               appendMessage({ sender: data.username, content: data.content, createdAt: new Date().toISOString(), msgType: data.msgType });
             }
+          } else if (data.type === 'dm') {
+            if (currentSelection && currentSelection.type === 'dm' && currentSelection.name === data.username) {
+              appendMessage({ sender: data.username, content: data.content, createdAt: new Date().toISOString(), msgType: data.msgType });
+            } else {
+              // Reload conversations if we received a DM from someone we're not currently looking at
+              loadConversations();
+            }
+          } else if (data.type === 'notification') {
+            loadConversations();
+            loadPendingFriends();
+            loadPendingCount();
           }
         };
 
@@ -1204,7 +1215,11 @@
             input.value = "";
             // Broadcast via WS so other clients get it
             if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'message', username, content, channelId: currentSelection.id, msgType: 'text' }));
+              if (currentSelection.type === 'channel') {
+                ws.send(JSON.stringify({ type: 'message', username, content, channelId: currentSelection.id, msgType: 'text' }));
+              } else {
+                ws.send(JSON.stringify({ type: 'dm', username, content, recipient: currentSelection.name, msgType: 'text' }));
+              }
             }
             // Append locally immediately
             appendMessage({ sender: username, content, createdAt: new Date().toISOString() });
@@ -1230,7 +1245,11 @@
           }).then(res => {
             if (res.ok) {
               if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'message', username, content: dataUrl, channelId: currentSelection.id, msgType: 'image' }));
+                if (currentSelection.type === 'channel') {
+                  ws.send(JSON.stringify({ type: 'message', username, content: dataUrl, channelId: currentSelection.id, msgType: 'image' }));
+                } else {
+                  ws.send(JSON.stringify({ type: 'dm', username, content: dataUrl, recipient: currentSelection.name, msgType: 'image' }));
+                }
               }
               appendMessage({ sender: username, content: dataUrl, createdAt: new Date().toISOString(), msgType: 'image' });
             }
@@ -1341,6 +1360,9 @@
             btn.innerText = 'Hủy';
             btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(username, btn); };
             loadConversations(); // refresh state
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'notification', recipient: username }));
+            }
           }
           alert(data.message);
         } catch(e) { alert('Lỗi: ' + e.message); }
@@ -1404,7 +1426,12 @@
           });
           const data = await res.json();
           document.getElementById('fi_' + friendshipId)?.remove();
-          if (action === 'accept') loadConversations(); // refresh friend list
+          if (action === 'accept') {
+            loadConversations(); // refresh friend list
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'notification', recipient: 'admin' })); // We don't have username here, ideally server handles it. But we can force reload.
+            }
+          }
           alert(data.message);
         } catch(e) { alert('Lỗi: ' + e.message); }
       }

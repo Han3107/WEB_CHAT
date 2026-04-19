@@ -68,9 +68,23 @@ public class ChatEndpoint {
                 
                 System.out.println("[" + getTime() + "] " + username + " [ch:" + channelId + "]: " + content);
                 broadcastChannelMessage(username, content, channelId, msgType);
-            } else if ("online".equals(type)) {
-                // broadcast updated online list
-                updateUserList();
+            } else if ("dm".equals(type)) {
+                String sender = userNames.getOrDefault(session, "Guest");
+                String content = json.get("content").getAsString();
+                String recipient = json.get("recipient").getAsString();
+                String msgType = json.has("msgType") ? json.get("msgType").getAsString() : "text";
+
+                JsonObject out = new JsonObject();
+                out.addProperty("type", "dm");
+                out.addProperty("username", sender);
+                out.addProperty("content", content);
+                out.addProperty("msgType", msgType);
+                out.addProperty("time", getTime());
+                
+                sendToUser(recipient, out.toString());
+            } else if ("notification".equals(type)) {
+                String recipient = json.get("recipient").getAsString();
+                sendToUser(recipient, message);
             } else if ("online".equals(type)) {
                 updateUserList();
             }
@@ -160,6 +174,14 @@ public class ChatEndpoint {
         
         for (Session session : snapshotSessions()) {
             sendIfOpen(session, message, "user list");
+        }
+    }
+
+    private void sendToUser(String targetUsername, String message) {
+        for (Map.Entry<Session, String> entry : userNames.entrySet()) {
+            if (entry.getValue().equals(targetUsername)) {
+                sendIfOpen(entry.getKey(), message, "private message");
+            }
         }
     }
 
